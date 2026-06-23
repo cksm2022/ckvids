@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CKSM2022 — Your World, Your Videos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --neon-cyan: #00f5ff;
+    --neon-pink: #ff00aa;
+    --neon-purple: #bf00ff;
+    --neon-green: #00ff88;
+    --neon-orange: #ff6a00;
+    --bg-void: #050508;
+    --bg-panel: #0d0d14;
+    --bg-card: #121220;
+    --bg-card2: #181830;
+    --border-dim: rgba(0,245,255,0.15);
+    --border-bright: rgba(0,245,255,0.5);
+    --text-main: #e8e8f0;
+    --text-muted: #6a6a88;
+    --text-accent: var(--neon-cyan);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-void);
+    color: var(--text-main);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    min-height: 100vh;
+  }
+
+  /* NEW: Canvas background */
+  #particles-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* === NAV === */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(5,5,8,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-dim);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.4rem;
+    color: var(--neon-cyan);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 16px var(--neon-cyan), 0 0 32px rgba(0,245,255,0.3);
+    text-decoration: none;
+  }
+
+  .logo span { color: var(--neon-pink); text-shadow: 0 0 16px var(--neon-pink); }
+
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+
+  /* === BUTTONS === */
+  .btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    outline: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-cyan {
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+    box-shadow: inset 0 0 12px rgba(0,245,255,0.05);
+  }
+  .btn-cyan:hover {
+    background: rgba(0,245,255,0.12);
+    box-shadow: 0 0 16px rgba(0,245,255,0.3), inset 0 0 12px rgba(0,245,255,0.1);
+  }
+
+  .btn-pink {
+    background: transparent;
+    border: 1px solid var(--neon-pink);
+    color: var(--neon-pink);
+    text-shadow: 0 0 8px var(--neon-pink);
+    box-shadow: inset 0 0 12px rgba(255,0,170,0.05);
+  }
+  .btn-pink:hover {
+    background: rgba(255,0,170,0.12);
+    box-shadow: 0 0 16px rgba(255,0,170,0.3);
+  }
+
+  .btn-green {
+    background: rgba(0,255,136,0.1);
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    text-shadow: 0 0 8px var(--neon-green);
+  }
+  .btn-green:hover {
+    background: rgba(0,255,136,0.2);
+    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  }
+
+  .btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* === PAGES & MODALS (Kept exactly identical to your original) === */
+  .page { display: none; }
+  .page.active { display: block; }
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg-panel); border: 1px solid var(--border-bright); width: min(420px, 95vw); padding: 2rem; position: relative; box-shadow: 0 0 40px rgba(0,245,255,0.15), 0 0 80px rgba(0,0,0,0.8); }
+  .modal-corner { position: absolute; width: 14px; height: 14px; border-color: var(--neon-cyan); border-style: solid; }
+  .modal-corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .modal-corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+  .modal-corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+  .modal-corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+  .modal h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--neon-cyan); text-shadow: 0 0 12px rgba(0,245,255,0.5); margin-bottom: 1.5rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.78rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .field input { width: 100%; background: var(--bg-void); border: 1px solid var(--border-dim); color: var(--text-main); font-family: 'Share Tech Mono', monospace; font-size: 0.95rem; padding: 10px 14px; border-radius: 2px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+  .field input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0,245,255,0.15); }
+  .form-actions { display: flex; gap: 10px; margin-top: 1.5rem; justify-content: flex-end; }
+  .error-msg { font-size: 0.82rem; color: #ff4466; margin-top: 8px; letter-spacing: 0.05em; min-height: 20px; }
+
+  /* === HERO === */
+  .hero { text-align: center; padding: 5rem 2rem 4rem; position: relative; }
+  .hero-tag { font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); margin-bottom: 1.2rem; }
+  .hero h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.1; color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.2); margin-bottom: 1rem; }
+  .hero h1 .accent-c { color: var(--neon-cyan); text-shadow: 0 0 20px var(--neon-cyan); }
+  .hero h1 .accent-p { color: var(--neon-pink); text-shadow: 0 0 20px var(--neon-pink); }
+  .hero-sub { color: var(--text-muted); font-size: 1rem; letter-spacing: 0.08em; max-width: 480px; margin: 0 auto 2rem; line-height: 1.6; }
+
+  /* === SECTIONS === */
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border-bright), transparent); margin: 0 2rem; }
+  .section-header { padding: 2rem 2rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .section-title { font-size: 0.8rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+  .section-title::before { content: ''; display: inline-block; width: 20px; height: 1px; background: var(--neon-cyan); box-shadow: 0 0 6px var(--neon-cyan); }
+
+  /* === UPLOAD PANEL === */
+  .upload-panel { margin: 0 2rem 2rem; background: var(--bg-card); border: 1px dashed rgba(0,255,136,0.3); border-radius: 4px; padding: 2rem; text-align: center; transition: border-color 0.2s, background 0.2s; }
+  .upload-panel.drag-over { border-color: var(--neon-green); background: rgba(0,255,136,0.04); box-shadow: 0 0 24px rgba(0,255,136,0.1); }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 0.8rem; filter: drop-shadow(0 0 8px var(--neon-green)); }
+  .upload-panel h3 { font-size: 1rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--neon-green); text-shadow: 0 0 8px rgba(0,255,136,0.4); margin-bottom: 0.4rem; }
+  .upload-panel p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  #file-input { display: none; }
+  .upload-meta { margin-top: 1.5rem; }
+  .upload-meta input[type="text"] { width: 100%; max-width: 400px; background: var(--bg-void); border: 1px solid var(--border-dim); color: var(--text-main); font-family: 'Rajdhani', sans-serif; font-size: 1rem; padding: 10px 14px; border-radius: 2px; outline: none; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; transition: border-color 0.15s; }
+  .upload-meta input[type="text"]:focus { border-color: var(--neon-green); box-shadow: 0 0 10px rgba(0,255,136,0.15); }
+
+  /* === VIDEO GRID === */
+  .video-grid { padding: 1rem 2rem 3rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+  .video-card { background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 4px; overflow: hidden; cursor: pointer; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; position: relative; }
+  .video-card:hover { border-color: var(--neon-cyan); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,245,255,0.1), 0 0 0 1px rgba(0,245,255,0.15); }
+  .video-thumb { width: 100%; aspect-ratio: 16/9; background: var(--bg-void); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .video-thumb video { width: 100%; height: 100%; object-fit: cover; }
+  .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.2s; }
+  .video-card:hover .play-overlay { opacity: 1; }
+  .play-btn-big { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--neon-cyan); display: flex; align-items: center; justify-content: center; color: var(--neon-cyan); font-size: 1.4rem; box-shadow: 0 0 20px rgba(0,245,255,0.4); text-shadow: 0 0 10px var(--neon-cyan); }
+  .video-info { padding: 0.9rem 1rem; }
+  .video-title { font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-main); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .video-meta { display: flex; align-items: center; justify-content: space-between; font-family: 'Share Tech Mono', monospace; font-size: 0.72rem; color: var(--text-muted); }
+  .video-owner { color: var(--neon-pink); text-shadow: 0 0 6px rgba(255,0,170,0.4); }
+  .owner-badge { position: absolute; top: 8px; right: 8px; background: rgba(191,0,255,0.85); color: #fff; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; box-shadow: 0 0 10px rgba(191,0,255,0.5); }
+  .delete-vid-btn { background: transparent; border: 1px solid rgba(255,68,102,0.4); color: #ff4466; font-size: 0.7rem; font-family: 'Share Tech Mono', monospace; letter-spacing: 0.1em; padding: 3px 8px; cursor: pointer; border-radius: 2px; transition: background 0.15s; }
+  .delete-vid-btn:hover { background: rgba(255,68,102,0.15); }
+
+  /* === PLAYER MODAL === */
+  .player-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 300; align-items: center; justify-content: center; flex-direction: column; padding: 1.5rem; }
+  .player-modal.open { display: flex; }
+  .player-inner { width: min(900px, 100%); max-height: 90vh; display: flex; flex-direction: column; }
+  .player-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1rem; }
+  .player-title { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.08em; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 1rem; }
+  .close-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); width: 36px; height: 36px; border-radius: 2px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, color 0.15s; flex-shrink: 0; }
+  .close-btn:hover { border-color: var(--neon-pink); color: var(--neon-pink); }
+  .player-video { width: 100%; border: 1px solid var(--border-dim); border-radius: 2px; background: #000; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
+
+  /* === MISC === */
+  .empty-state { text-align: center; padding: 5rem 2rem; color: var(--text-muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+  .empty-state p { font-size: 0.9rem; letter-spacing: 0.08em; }
+  .user-chip { font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: var(--neon-cyan); text-shadow: 0 0 8px rgba(0,245,255,0.4); background: rgba(0,245,255,0.07); border: 1px solid rgba(0,245,255,0.25); padding: 5px 12px; border-radius: 2px; letter-spacing: 0.08em; }
+  
+  /* === STATUS BAR === */
+  .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(5,5,8,0.95); border-top: 1px solid var(--border-dim); padding: 6px 2rem; display: flex; align-items: center; gap: 1.5rem; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.08em; z-index: 50; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon-green); box-shadow: 0 0 6px var(--neon-green); flex-shrink: 0; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* === UPLOAD PROGRESS & TOAST === */
+  .upload-progress { display: none; margin-top: 1rem; }
+  .progress-bar-bg { height: 3px; background: rgba(0,255,136,0.1); border-radius: 2px; overflow: hidden; max-width: 400px; margin: 0 auto 6px; }
+  .progress-bar-fill { height: 100%; background: var(--neon-green); box-shadow: 0 0 8px var(--neon-green); transition: width 0.1s; width: 0%; }
+  .progress-label { font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--neon-green); text-shadow: 0 0 6px rgba(0,255,136,0.4); }
+  .toast { position: fixed; bottom: 48px; right: 2rem; background: var(--bg-panel); border: 1px solid var(--border-bright); padding: 12px 20px; font-size: 0.85rem; letter-spacing: 0.06em; border-radius: 2px; z-index: 999; display: none; box-shadow: 0 0 20px rgba(0,245,255,0.2); }
+  .toast.show { display: block; animation: toastin 0.2s ease; }
+  @keyframes toastin { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<canvas id="particles-bg"></canvas>
+
+<nav>
+  <a class="logo" href="#"><span id="logo-span">CKSM</span>2022</a>
+  <div class="nav-right" id="nav-right">
+    <a href="#" id="support-link" class="btn btn-green">Support</a>
+    <button class="btn btn-cyan" onclick="openModal('login')">Log In</button>
+    <button class="btn btn-pink" onclick="openModal('signup')">Sign Up</button>
+  </div>
+</nav>
+
+<div class="modal-bg" id="modal-login">
+  <div class="modal">
+    <div class="modal-corner tl"></div><div class="modal-corner tr"></div>
+    <div class="modal-corner bl"></div><div class="modal-corner br"></div>
+    <h2>Log In</h2>
+    <div class="field"><label>Username</label><input type="text" id="login-username" autocomplete="off"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password"></div>
+    <div class="error-msg" id="login-error"></div>
+    <div class="form-actions">
+      <button class="btn btn-cyan" onclick="closeModal('login')">Cancel</button>
+      <button class="btn btn-pink" onclick="doLogin()">Log In</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-signup">
+  <div class="modal">
+    <div class="modal-corner tl"></div><div class="modal-corner tr"></div>
+    <div class="modal-corner bl"></div><div class="modal-corner br"></div>
+    <h2>Create Account</h2>
+    <div class="field"><label>Username</label><input type="text" id="signup-username" autocomplete="off"></div>
+    <div class="field"><label>Password</label><input type="password" id="signup-password"></div>
+    <div class="field"><label>Confirm Password</label><input type="password" id="signup-confirm"></div>
+    <div class="error-msg" id="signup-error"></div>
+    <div class="form-actions">
+      <button class="btn btn-cyan" onclick="closeModal('signup')">Cancel</button>
+      <button class="btn btn-pink" onclick="doSignup()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<div class="player-modal" id="player-modal">
+  <div class="player-inner">
+    <div class="player-header">
+      <div class="player-title" id="player-title">Video Title</div>
+      <button class="close-btn" onclick="closePlayer()">✕</button>
+    </div>
+    <video class="player-video" id="main-player" controls></video>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-tag" id="hero-tag">// No rules. No restrictions. Your channel.</div>
+  <h1><span class="accent-c" id="hero-accent-c">CKSM</span><span class="accent-p" id="hero-accent-p">2022</span><br>Video Platform</h1>
+  <p class="hero-sub" id="hero-sub">Watch videos uploaded by CKSM2022. No ads. No policies. No BS.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <button class="btn btn-cyan" onclick="scrollToVideos()">↓ Watch Videos</button>
+    <button class="btn btn-pink" id="hero-upload-btn" style="display:none" onclick="scrollToUpload()">↑ Upload Video</button>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div id="upload-section" style="display:none">
+  <div class="section-header">
+    <div class="section-title">Upload New Video</div>
+  </div>
+  <div class="upload-panel" id="upload-panel" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+    <div class="upload-icon">📼</div>
+    <h3>Drop Video File Here</h3>
+    <p>Or click to browse — MP4, WebM, MOV, AVI supported</p>
+    <button class="btn btn-green" onclick="document.getElementById('file-input').click()">Select File</button>
+    <input type="file" id="file-input" accept="video/*" onchange="fileSelected(event)">
+    <div class="upload-meta" id="upload-meta" style="display:none">
+      <input type="text" id="video-title-input" placeholder="Video title (optional)" maxlength="80">
+      <button class="btn btn-green" onclick="uploadVideo()">⬆ Publish Video</button>
+    </div>
+    <div class="upload-progress" id="upload-progress">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <div class="progress-label" id="progress-label">Processing…</div>
+    </div>
+  </div>
+  <div class="divider"></div>
+</div>
+
+<div id="videos-section">
+  <div class="section-header">
+    <div class="section-title">All Videos</div>
+    <div id="video-count-label" style="font-size:0.78rem;letter-spacing:0.1em;color:var(--text-muted);"></div>
+  </div>
+  <div class="video-grid" id="video-grid">
+    <div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">📭</div>
+      <p>No videos yet — check back soon.</p>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot"></div>
+  <span id="status-user-info">NOT LOGGED IN</span>
+  <span style="margin-left:auto" id="footer-text">CKSM2022 PLATFORM v1.0</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+// CENTRAL CONFIGURATION - FULLY CUSTOMIZABLE
+// ==========================================
+const CONFIG = {
+  appName: "CKSM2022",
+  appSubtitle: "Video Platform",
+  heroTagline: "// No rules. No restrictions. Your channel.",
+  heroDescription: "Watch videos uploaded by CKSM2022. No ads. No policies. No BS.",
+  ownerUsername: "cksm2022",
+  ownerPassword: "Xz9#vK2$mP7!qR4", // System Password
+  supportEmail: "your.email@gmail.com", // Add your Gmail here
+  particles: {
+    count: 60,
+    colors: ['#00f5ff', '#ff00aa', '#00ff88'] // Cyan, Pink, Green
+  }
+};
+
+// --- Apply Config to UI ---
+document.title = `${CONFIG.appName} — Your World, Your Videos`;
+document.getElementById('logo-span').textContent = CONFIG.appName.substring(0, 4);
+document.getElementById('hero-accent-c').textContent = CONFIG.appName.substring(0, 4);
+document.getElementById('hero-accent-p').textContent = CONFIG.appName.substring(4);
+document.getElementById('hero-tag').textContent = CONFIG.heroTagline;
+document.getElementById('hero-sub').textContent = CONFIG.heroDescription;
+document.getElementById('footer-text').textContent = `${CONFIG.appName} PLATFORM v1.0`;
+document.getElementById('support-link').href = `mailto:${CONFIG.supportEmail}`;
+
+// --- App State ---
+let state = {
+  currentUser: null,
+  accounts: {},
+  videos: []
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('cksm2022_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state.accounts = parsed.accounts || {};
+    }
+  } catch(e) {}
+  state.accounts[CONFIG.ownerUsername] = { password: CONFIG.ownerPassword };
+  saveAccounts();
+}
+
+function saveAccounts() {
+  try { localStorage.setItem('cksm2022_state', JSON.stringify({ accounts: state.accounts })); } catch(e) {}
+}
+
+loadState();
+
+// --- Auth ---
+function doSignup() {
+  const username = document.getElementById('signup-username').value.trim().toLowerCase();
+  const password = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+  const err = document.getElementById('signup-error');
+
+  if (!username) { err.textContent = 'Username required.'; return; }
+  if (username.length < 3) { err.textContent = 'Username must be at least 3 characters.'; return; }
+  if (/\s/.test(username)) { err.textContent = 'No spaces in username.'; return; }
+  if (!password) { err.textContent = 'Password required.'; return; }
+  if (password.length < 4) { err.textContent = 'Password must be at least 4 characters.'; return; }
+  if (password !== confirm) { err.textContent = 'Passwords do not match.'; return; }
+  if (state.accounts[username]) { err.textContent = 'Username already taken.'; return; }
+
+  state.accounts[username] = { password };
+  saveAccounts();
+  err.textContent = '';
+  closeModal('signup');
+  loginUser(username);
+  showToast('Account created! Welcome, ' + username.toUpperCase());
+}
+
+function doLogin() {
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+
+  if (!username || !password) { err.textContent = 'Fill in all fields.'; return; }
+  if (!state.accounts[username]) { err.textContent = 'No account with that username.'; return; }
+  if (state.accounts[username].password !== password) { err.textContent = 'Wrong password.'; return; }
+
+  err.textContent = '';
+  closeModal('login');
+  loginUser(username);
+}
+
+function loginUser(username) {
+  state.currentUser = username;
+  const isOwner = username === CONFIG.ownerUsername;
+
+  document.getElementById('nav-right').innerHTML = `
+    <a href="mailto:${CONFIG.supportEmail}" class="btn btn-green">Support</a>
+    <span class="user-chip">${username.toUpperCase()}</span>
+    ${isOwner ? '<span style="font-size:0.7rem;letter-spacing:0.1em;color:var(--neon-purple);text-shadow:0 0 8px var(--neon-purple)">OWNER</span>' : ''}
+    <button class="btn btn-cyan" onclick="doLogout()">Log Out</button>
+  `;
+
+  document.getElementById('status-user-info').textContent =
+    `LOGGED IN AS: ${username.toUpperCase()}` + (isOwner ? ' [OWNER]' : ' [VIEWER]');
+
+  if (isOwner) {
+    document.getElementById('upload-section').style.display = 'block';
+    document.getElementById('hero-upload-btn').style.display = 'inline-block';
+  }
+}
+
+function doLogout() {
+  state.currentUser = null;
+  document.getElementById('nav-right').innerHTML = `
+    <a href="mailto:${CONFIG.supportEmail}" class="btn btn-green">Support</a>
+    <button class="btn btn-cyan" onclick="openModal('login')">Log In</button>
+    <button class="btn btn-pink" onclick="openModal('signup')">Sign Up</button>
+  `;
+  document.getElementById('status-user-info').textContent = 'NOT LOGGED IN';
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('hero-upload-btn').style.display = 'none';
+  showToast('Logged out.');
+}
+
+// --- Modals ---
+function openModal(which) { document.getElementById('modal-' + which).classList.add('open'); document.getElementById(which + '-error').textContent = ''; }
+function closeModal(which) { document.getElementById('modal-' + which).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(bg => { bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); }); });
+
+// --- File Upload ---
+let pendingFile = null;
+
+function dragOver(e) { e.preventDefault(); document.getElementById('upload-panel').classList.add('drag-over'); }
+function dragLeave(e) { document.getElementById('upload-panel').classList.remove('drag-over'); }
+function dropFile(e) {
+  e.preventDefault();
+  document.getElementById('upload-panel').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) { pendingFile = file; showUploadMeta(file); } else { showToast('Please drop a video file.'); }
+}
+
+function fileSelected(e) { const file = e.target.files[0]; if (!file) return; pendingFile = file; showUploadMeta(file); }
+
+function showUploadMeta(file) {
+  document.getElementById('upload-meta').style.display = 'block';
+  const mb = (file.size / 1024 / 1024).toFixed(1);
+  document.getElementById('video-title-input').placeholder = file.name.replace(/\.[^.]+$/, '') + ` (${mb} MB)`;
+}
+
+// NOTE: This currently fakes the upload and stores it temporarily in the browser. 
+// To make it permanent on your desktop, you need the Node.js backend setup!
+function uploadVideo() {
+  if (state.currentUser !== CONFIG.ownerUsername) { showToast(`Only ${CONFIG.appName} can upload videos.`); return; }
+  if (!pendingFile) { showToast('Select a file first.'); return; }
+
+  const titleInput = document.getElementById('video-title-input').value.trim();
+  const title = titleInput || pendingFile.name.replace(/\.[^.]+$/, '');
+  const meta = document.getElementById('upload-meta');
+  const prog = document.getElementById('upload-progress');
+  meta.style.display = 'none';
+  prog.style.display = 'block';
+
+  let pct = 0;
+  const fill = document.getElementById('progress-fill');
+  const label = document.getElementById('progress-label');
+
+  const iv = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 18, 100);
+    fill.style.width = pct + '%';
+    label.textContent = pct < 100 ? `Processing… ${Math.round(pct)}%` : 'Done!';
+    if (pct >= 100) {
+      clearInterval(iv);
+      setTimeout(() => {
+        const url = URL.createObjectURL(pendingFile);
+        const video = {
+          id: Date.now(), title, url, owner: CONFIG.ownerUsername,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          size: (pendingFile.size / 1024 / 1024).toFixed(1) + ' MB'
+        };
+        state.videos.unshift(video);
+        renderVideos();
+        prog.style.display = 'none'; fill.style.width = '0%';
+        document.getElementById('video-title-input').value = '';
+        document.getElementById('file-input').value = '';
+        pendingFile = null;
+        showToast('✓ Video published!');
+      }, 400);
+    }
+  }, 60);
+}
+
+// --- Video Rendering ---
+function renderVideos() {
+  const grid = document.getElementById('video-grid');
+  const countLabel = document.getElementById('video-count-label');
+
+  if (state.videos.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📭</div><p>No videos yet — check back soon.</p></div>`;
+    countLabel.textContent = ''; return;
+  }
+
+  countLabel.textContent = state.videos.length + ' video' + (state.videos.length !== 1 ? 's' : '');
+  const isOwner = state.currentUser === CONFIG.ownerUsername;
+  
+  grid.innerHTML = state.videos.map(v => `
+    <div class="video-card" id="vcard-${v.id}">
+      <div class="video-thumb" onclick="playVideo(${v.id})">
+        <video src="${v.url}" preload="metadata" muted playsinline></video>
+        <div class="play-overlay"><div class="play-btn-big">▶</div></div>
+        <div class="owner-badge">${CONFIG.ownerUsername.toUpperCase()}</div>
+      </div>
+      <div class="video-info">
+        <div class="video-title" title="${esc(v.title)}">${esc(v.title)}</div>
+        <div class="video-meta">
+          <span class="video-owner">@${v.owner}</span>
+          <span>${v.date} · ${v.size}</span>
+          ${isOwner ? `<button class="delete-vid-btn" onclick="deleteVideo(${v.id}, event)">✕ Delete</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function esc(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function playVideo(id) { const v = state.videos.find(v => v.id === id); if (!v) return; document.getElementById('player-title').textContent = v.title; const player = document.getElementById('main-player'); player.src = v.url; document.getElementById('player-modal').classList.add('open'); player.play(); }
+function closePlayer() { document.getElementById('player-modal').classList.remove('open'); const player = document.getElementById('main-player'); player.pause(); player.src = ''; }
+function deleteVideo(id, e) { e.stopPropagation(); if (state.currentUser !== CONFIG.ownerUsername) return; state.videos = state.videos.filter(v => v.id !== id); renderVideos(); showToast('Video removed.'); }
+document.getElementById('player-modal').addEventListener('click', function(e) { if (e.target === this) closePlayer(); });
+function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 2800); }
+function scrollToVideos() { document.getElementById('videos-section').scrollIntoView({ behavior: 'smooth' }); }
+function scrollToUpload() { document.getElementById('upload-section').scrollIntoView({ behavior: 'smooth' }); }
+
+renderVideos();
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.modal-bg.open').forEach(m => m.classList.remove('open')); closePlayer(); } });
+
+// --- Particle Background System ---
+const canvas = document.getElementById('particles-bg');
+const ctx = canvas.getContext('2d');
+let particlesArray = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedX = (Math.random() * 1) - 0.5;
+    this.speedY = (Math.random() * 1) - 0.5;
+    this.color = CONFIG.particles.colors[Math.floor(Math.random() * CONFIG.particles.colors.length)];
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+    if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+  }
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+  }
+}
+
+function initParticles() {
+  particlesArray = [];
+  for (let i = 0; i < CONFIG.particles.count; i++) {
+    particlesArray.push(new Particle());
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < particlesArray.length; i++) {
+    particlesArray[i].update();
+    particlesArray[i].draw();
+  }
+  requestAnimationFrame(animateParticles);
+}
+
+initParticles();
+animateParticles();
+
+// Init System UI
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => { showToast(`🔑 Account Key Activated for ${CONFIG.ownerUsername}!`); }, 600);
+  const statusBar = document.querySelector('.status-bar');
+  if (statusBar) {
+    const keyDisplay = document.createElement('span');
+    keyDisplay.style.color = 'var(--neon-pink)';
+    keyDisplay.style.marginLeft = '1.5rem';
+    keyDisplay.style.textShadow = '0 0 8px var(--neon-pink)';
+    keyDisplay.textContent = `[SYS PASS: ${CONFIG.ownerPassword}]`;
+    statusBar.insertBefore(keyDisplay, statusBar.lastElementChild);
+  }
+});
+</script>
+</body>
+</html>

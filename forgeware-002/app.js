@@ -5,6 +5,9 @@ const AGE_KEY = 'revenant_fw002_age';
 const TERMS_KEY = 'revenant_fw002_terms';
 const STATE_KEY = 'revenant_fw002_local';
 const TERMS_VERSION = 'revenant-community-rules-0.02';
+let storage;
+try { storage=window.localStorage; const probe='__revenant_fw002_probe'; storage.setItem(probe,'1'); storage.removeItem(probe); }
+catch (_) { storage={getItem:()=>null,setItem:()=>{},removeItem:()=>{}}; }
 const config = window.REVENANT_CONFIG || {};
 const backendConfigured = !!(config.supabaseUrl && config.supabasePublishableKey && window.supabase && window.supabase.createClient);
 let db = null;
@@ -25,7 +28,7 @@ const demoSeeds = [
  {id:'seed-4',name:'NullPointer',handle:'@nullpointer',initials:'NP',time:'1 hour ago',category:'DISCUSSION',body:'What is one small feature that would make a social app noticeably nicer to use?',font_family:'standard',likes:31,comments_count:1,comments:[{id:'c-4',name:'ByteBandit',initials:'BB',avatar:'orange',body:'A chronological feed that stays chronological.',font_family:'pixel'}],seed:true}
 ];
 function getStoredState() {
-  try { const v = JSON.parse(localStorage.getItem(STATE_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; }
+  try { const v = JSON.parse(storage.getItem(STATE_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; }
   catch (_) { return {}; }
 }
 const state = Object.assign({profile:null,posts:demoSeeds.map(p=>({...p,comments:p.comments.map(c=>({...c}))})),bookmarks:[],likedLocal:[],reduceMotion:false},getStoredState());
@@ -58,9 +61,9 @@ const reels = [
 ];
 function saveLocal() {
   if (remoteMode) {
-    try { localStorage.setItem(STATE_KEY, JSON.stringify({profile: state.profile, bookmarks: state.bookmarks, reduceMotion: state.reduceMotion, likedLocal: state.likedLocal})); return true; } catch (_) { return false; }
+    try { storage.setItem(STATE_KEY, JSON.stringify({profile: state.profile, bookmarks: state.bookmarks, reduceMotion: state.reduceMotion, likedLocal: state.likedLocal})); return true; } catch (_) { return false; }
   }
-  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); return true; }
+  try { storage.setItem(STATE_KEY, JSON.stringify(state)); return true; }
   catch (_) { toast('Browser storage is full. Remove a large demo attachment or export your data.'); return false; }
 }
 function toast(message) {
@@ -227,8 +230,8 @@ function renderAuthGate(message='') {
 }
 function bindAuthTabs(){/* delegated data-gate handlers keep the flow simple */}
 function resetGateIfNeeded() {
- if(!localStorage.getItem(AGE_KEY)){showGate('age');return false}
- if(!localStorage.getItem(TERMS_KEY)){showGate('welcome');return false}
+ if(!storage.getItem(AGE_KEY)){showGate('age');return false}
+ if(!storage.getItem(TERMS_KEY)){showGate('welcome');return false}
  return true;
 }
 async function ensureProfile(authUser, usernameHint='') {
@@ -358,7 +361,7 @@ async function addComment(form) {
  if(remoteMode&&db&&user) {
   const {error}=await db.from('comments').insert({post_id:postId,user_id:user.id,body,font_family:style?.value||'standard'});
   if(error)throw error;
-  await refreshComments(postId);await refreshRemotePosts();commentsOpen.add(String(postId));renderApp();toast('Reply published.');return;
+  await refreshRemotePosts();await refreshComments(postId);commentsOpen.add(String(postId));renderApp();toast('Reply published.');return;
  }
  const p=state.posts.find(x=>String(x.id)===String(postId));if(!p)return;
  p.comments=p.comments||[];p.comments.push({id:'comment-'+Date.now(),name:(profile||state.profile||{}).username||'Visitor',initials:initials((profile||state.profile||{}).username||'Visitor'),body,font_family:style?.value||'standard',created_at:new Date().toISOString()});
@@ -384,7 +387,7 @@ function exportData() {
 }
 async function resetDemo() {
  if(!confirm('Reset the local demo posts, profile, and settings? This cannot be undone.'))return;
- localStorage.removeItem(STATE_KEY);state.profile=null;state.posts=demoSeeds.map(p=>({...p,comments:p.comments.map(c=>({...c}))}));state.bookmarks=[];state.likedLocal=[];saveLocal();profile=null;showGate('profile');
+ storage.removeItem(STATE_KEY);state.profile=null;state.posts=demoSeeds.map(p=>({...p,comments:p.comments.map(c=>({...c}))}));state.bookmarks=[];state.likedLocal=[];saveLocal();profile=null;showGate('profile');
 }
 function importFont(file) {
  if(!file)return;
@@ -412,7 +415,7 @@ document.addEventListener('click',async event=>{
    if(action==='agree') { termsOpenedThisVisit=false;showGate('birch'); }
    else if(action==='read-terms') { termsOpenedThisVisit=true;showGate('terms'); }
    else if(action==='accept-terms') {
-    localStorage.setItem(TERMS_KEY,JSON.stringify({version:TERMS_VERSION,acceptedAt:new Date().toISOString()}));
+    storage.setItem(TERMS_KEY,JSON.stringify({version:TERMS_VERSION,acceptedAt:new Date().toISOString()}));
     if(db){authMode='signup';showGate('auth')}
     else showGate('profile');
    }
@@ -446,7 +449,7 @@ document.addEventListener('click',async event=>{
    if(action==='join-community'){showModal(btn.getAttribute('data-name')||'Community','This is a community preview. Persistent memberships will come with the communities backend.');return}
    if(action==='signout'){if(db){await db.auth.signOut()}user=null;profile=null;remoteMode=false;showGate('auth');return}
    if(action==='open-auth'){authMode='login';showGate(db?'auth':'profile');return}
-   if(action==='reset-onboarding'){localStorage.removeItem(AGE_KEY);localStorage.removeItem(TERMS_KEY);showGate('age');return}
+   if(action==='reset-onboarding'){storage.removeItem(AGE_KEY);storage.removeItem(TERMS_KEY);showGate('age');return}
    if(action==='close-modal'||action==='modal-backdrop'){if(action==='modal-backdrop'&&event.target!==btn)return;$('#modal-root').innerHTML='';return}
   } catch(err){console.error(err);toast(err.message||'That action failed. Check the backend configuration.')}
  }
@@ -477,7 +480,7 @@ document.addEventListener('submit',async event=>{
    if(Number.isNaN(birth.getTime())||birth>now){toast('Enter a valid birthday.');return}
    let age=now.getFullYear()-birth.getFullYear();const month=now.getMonth()-birth.getMonth();if(month<0||(month===0&&now.getDate()<birth.getDate()))age--;
    if(age<13){showGate('under13');return}
-   localStorage.setItem(AGE_KEY,'declared');showGate('welcome');return;
+   storage.setItem(AGE_KEY,'declared');showGate('welcome');return;
   }
   if(form.id==='local-profile-form') {
    event.preventDefault();const name=$('#local-name')?.value.trim();if(!name)return;
@@ -541,10 +544,6 @@ async function start() {
     user=data.session.user;remoteMode=true;
     try{await ensureProfile(user)}catch(err){console.error(err);showGate('auth','You are signed in, but your profile table is not ready. Run supabase-schema.sql in your project.');return}
     gateStep='';showGate('');await refreshRemotePosts();renderApp();
-    db.auth.onAuthStateChange((event,session)=>{
-      if(event==='SIGNED_OUT'){user=null;profile=null;remoteMode=false;authMode='login';showGate('auth')}
-      else if(session){user=session.user;remoteMode=true;ensureProfile(user).then(async()=>{await refreshRemotePosts()}).catch(err=>console.error(err))}
-    });
     return;
    }
   } catch(err){console.error(err);authMode='login';showGate('auth','Could not reach Supabase. Verify the URL, publishable key, and database setup.');return}

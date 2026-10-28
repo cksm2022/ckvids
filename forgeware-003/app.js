@@ -393,6 +393,9 @@ async function publishPost(form) {
  if(!body&&!selectedFile){toast('Write something or attach an image first.');return}
  const category=$('#post-category').value||'GENERAL';
  const font=$('#post-font').value||'standard';
+ const pollOptions=composerMode==='poll'?['#poll-option-1','#poll-option-2','#poll-option-3','#poll-option-4'].map(sel=>($(sel)?.value||'').trim()).filter(Boolean):[];
+ if(composerMode==='poll'&&pollOptions.length<2){toast('A poll needs at least two filled options.');return}
+ if(composerMode==='poll'&&selectedFile){toast('Remove the attachment before publishing a poll.');return}
  let mediaUrl=null;
  if(remoteMode&&db&&selectedFile) {
   if(!user){toast('Sign in to upload a shared attachment.');return}
@@ -407,14 +410,16 @@ async function publishPost(form) {
  }
  if(remoteMode&&db) {
   if(!user){toast('Sign in before publishing a shared post.');return}
-  const {data,error}=await db.from('posts').insert({user_id:user.id,body,category,font_family:font,media_url:mediaUrl}).select('id').single();
+  const payload={user_id:user.id,body,category,font_family:font,media_url:mediaUrl,post_type:composerMode==='poll'?'poll':'post',poll_data:composerMode==='poll'?{options:pollOptions}:null};
+  const {error}=await db.from('posts').insert(payload).select('id').single();
   if(error)throw error;
-  selectedFile=null;renderApp();await refreshRemotePosts();toast('Post published to shared Revenant.');return;
+  selectedFile=null;composerMode='post';state.drafts.postDraft='';saveLocal();await refreshRemotePosts();renderApp();toast(payload.post_type==='poll'?'Poll published to shared Revenant.':'Post published to shared Revenant.');return;
  }
- const p={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:(profile||state.profile||{}).username||'Visitor',handle:userHandle((profile||state.profile||{}).username||'Visitor'),created_at:new Date().toISOString(),category,body,font_family:font,likes_count:0,comments_count:0,comments:[],own:true};
+ const p={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:(profile||state.profile||{}).username||'Visitor',handle:userHandle((profile||state.profile||{}).username||'Visitor'),created_at:new Date().toISOString(),category,body,font_family:font,likes_count:0,comments_count:0,comments:[],own:true,post_type:composerMode==='poll'?'poll':'post',poll:composerMode==='poll'?{options:pollOptions,votes:pollOptions.map(()=>0),votedIndex:null}:null};
  if(selectedFile){p.attachmentData=mediaUrl;p.attachmentName=selectedFile.name}
- state.posts.unshift(p);state.posts=state.posts.slice(0,100);selectedFile=null;saveLocal();renderApp();toast('Post saved in this browser.');
+ state.posts.unshift(p);state.posts=state.posts.slice(0,150);selectedFile=null;composerMode='post';state.drafts.postDraft='';addNotification({type:'post',title:'Your post is live',body:'Your new post was saved in this browser.',time:'Just now',unread:true});saveLocal();renderApp();toast(p.post_type==='poll'?'Poll published locally.':'Post saved in this browser.');
 }
+
 function readAsDataURL(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error('Could not read attachment.'));reader.readAsDataURL(file)})}
 async function toggleLike(id) {
  if(remoteMode&&db&&user) {

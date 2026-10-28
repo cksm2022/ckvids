@@ -315,7 +315,7 @@ async function refreshRemotePosts() {
  }
  const {data:commentRows,error:commentError}=await db.from('comments').select('post_id');
  if(!commentError){const counts={};(commentRows||[]).forEach(c=>counts[c.post_id]=(counts[c.post_id]||0)+1);remotePosts.forEach(p=>p.comments_count=counts[p.id]||0)}
- if(user){const {data:savedRows,error:savedError}=await db.from('bookmarks').select('post_id').eq('user_id',user.id);if(!savedError)state.bookmarks=(savedRows||[]).map(row=>String(row.post_id));}
+ if(user){const {data:savedRows,error:savedError}=await db.from('bookmarks').select('post_id').eq('user_id',user.id);if(!savedError)state.bookmarks=(savedRows||[]).map(row=>String(row.post_id));const {data:followRows,error:followError}=await db.from('follows').select('following_id').eq('follower_id',user.id);if(!followError)state.following=(followRows||[]).map(row=>String(row.following_id));}
  state.posts=remotePosts;
  renderApp();
 }

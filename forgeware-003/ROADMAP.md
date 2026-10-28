@@ -10,7 +10,7 @@ This roadmap separates the current prototype from features that still need produ
 - Local demo accounts, demo credential screen, and browser storage
 - Local posts, likes, replies, reposts, bookmarks, GIF/image attachments, text styles, polls, voting, drafts, and sample notifications
 - Optional Supabase flow for shared profiles/posts/comments/likes/bookmarks/media and aggregate poll votes when the SQL schema is installed
-- Browser-session font loading for TTF/OTF/WOFF/WOFF2
+- Editable profile bio, customizable accent theme, and browser-session font loading for TTF/OTF/WOFF/WOFF2
 
 ## Forgeware 0.04 — next useful milestone
 

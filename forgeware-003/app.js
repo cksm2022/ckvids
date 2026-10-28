@@ -36,6 +36,11 @@ const state = Object.assign({profile:null,posts:demoSeeds.map(p=>({...p,comments
 if (!Array.isArray(state.posts)) state.posts = demoSeeds.map(p=>({...p,comments:p.comments.map(c=>({...c}))}));
 if (!Array.isArray(state.bookmarks)) state.bookmarks=[];
 if (!Array.isArray(state.likedLocal)) state.likedLocal=[];
+if (!Array.isArray(state.notifications)) state.notifications=[{id:'n1',type:'system',title:'Welcome to Forgeware 0.03',body:'Explore new search, polls, drafts, saved posts, and profile tools.',time:'Just now',unread:true},{id:'n2',type:'community',title:'Community spotlight',body:'Indie Dev Corner is looking for new projects.',time:'12 min ago',unread:true},{id:'n3',type:'system',title:'Version update',body:'Forgeware 0.03 is still an evolving prototype.',time:'Today',unread:false}];
+if (!state.drafts || typeof state.drafts!=='object') state.drafts={postDraft:''};
+if (!Array.isArray(state.joinedCommunities)) state.joinedCommunities=[];
+if (!Array.isArray(state.likedReels)) state.likedReels=[];
+if (!Array.isArray(state.pollVotes)) state.pollVotes=[];
 let user = null;
 let profile = null;
 let remotePosts = [];
@@ -46,6 +51,9 @@ let termsOpenedThisVisit = false;
 let currentRoute = '/home';
 let currentReel = 0;
 let selectedFile = null;
+let composerMode='post';
+let exploreQuery='';
+let exploreCategory='ALL';
 let selectedFont = 'standard';
 let importedFontName = '';
 let customFontReady = false;
@@ -64,7 +72,7 @@ const reels = [
 ];
 function saveLocal() {
   if (remoteMode) {
-    try { storage.setItem(STATE_KEY, JSON.stringify({profile: state.profile, bookmarks: state.bookmarks, reduceMotion: state.reduceMotion, likedLocal: state.likedLocal})); return true; } catch (_) { return false; }
+    try { storage.setItem(STATE_KEY, JSON.stringify({profile: state.profile, bookmarks: state.bookmarks, reduceMotion: state.reduceMotion, likedLocal: state.likedLocal, notifications:state.notifications, drafts:state.drafts, joinedCommunities:state.joinedCommunities, likedReels:state.likedReels, pollVotes:state.pollVotes})); return true; } catch (_) { return false; }
   }
   try { storage.setItem(STATE_KEY, JSON.stringify(state)); return true; }
   catch (_) { toast('Browser storage is full. Remove a large demo attachment or export your data.'); return false; }
@@ -193,10 +201,10 @@ function renderApp() {
 function routeFromHash() {
  let p=(location.hash||'#/home').replace(/^#/,'').split('?')[0].toLowerCase();
  if(!p.startsWith('/'))p='/'+p;
- const known=['/home','/feed','/posts','/reels','/terms','/settings','/profile','/communities','/messages','/help','/upload'];
+ const known=['/home','/feed','/posts','/reels','/terms','/settings','/profile','/communities','/messages','/help','/upload','/explore','/saved','/notifications','/drafts'];
  return known.includes(p)?(p==='/upload'?'/posts':p):'/home';
 }
-const routes=new Set(['/home','/feed','/posts','/reels','/terms','/settings','/profile','/communities','/messages','/help','/upload']);
+const routes=new Set(['/home','/feed','/posts','/reels','/terms','/settings','/profile','/communities','/messages','/help','/upload','/explore','/saved','/notifications','/drafts']);
 function navigate(path) {
  if(!routes.has(path)){toast('Unknown destination. Try /home, /feed, /posts, /reels, or /terms.');return}
  if(path==='/upload')path='/posts';

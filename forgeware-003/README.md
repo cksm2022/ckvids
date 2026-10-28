@@ -14,9 +14,9 @@ Open `index.html` in a current browser, or serve this directory as a static site
 - Explore/search over available posts, category filters, trending-topic shortcuts, and saved posts.
 - Post composer with text styles, image/GIF attachments, locally autosaved drafts, and poll creation.
 - Poll voting and result percentages in local mode. Shared poll creation and aggregate results when the Forgeware 0.03 schema has been applied.
-- Likes, replies with font choices, reposts, bookmarks, local notifications, and basic community join/create previews.
-- Profile name/bio foundations, locally configurable appearance, direct TTF/OTF/WOFF/WOFF2 font preview, and JSON export.
-- Optional Supabase email/password auth and shared profiles, posts, comments, likes, bookmarks, post media, and polls with row-level security.
+- Likes, replies with font choices, reposts, bookmarks, local notifications, follow/unfollow controls, a personalized Feed, and basic community join/create previews.
+- Editable profile name and bio, customizable accent theme, direct TTF/OTF/WOFF/WOFF2 font preview, and JSON export.
+- Optional Supabase email/password auth and shared profiles, posts, comments, likes, bookmarks, follows, post media, and polls with row-level security.
 
 ## Demo mode
 

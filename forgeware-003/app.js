@@ -41,6 +41,7 @@ if (!state.drafts || typeof state.drafts!=='object') state.drafts={postDraft:''}
 if (!Array.isArray(state.joinedCommunities)) state.joinedCommunities=[];
 if (!Array.isArray(state.likedReels)) state.likedReels=[];
 if (!Array.isArray(state.pollVotes)) state.pollVotes=[];
+if (!Array.isArray(state.following)) state.following=[];
 let user = null;
 let profile = null;
 let remotePosts = [];
@@ -72,7 +73,7 @@ const reels = [
 ];
 function saveLocal() {
   if (remoteMode) {
-    try { storage.setItem(STATE_KEY, JSON.stringify({profile: state.profile, bookmarks: state.bookmarks, reduceMotion: state.reduceMotion, likedLocal: state.likedLocal, notifications:state.notifications, drafts:state.drafts, joinedCommunities:state.joinedCommunities, likedReels:state.likedReels, pollVotes:state.pollVotes})); return true; } catch (_) { return false; }
+    try { storage.setItem(STATE_KEY, JSON.stringify({profile: state.profile, bookmarks: state.bookmarks, reduceMotion: state.reduceMotion, likedLocal: state.likedLocal, notifications:state.notifications, drafts:state.drafts, joinedCommunities:state.joinedCommunities, likedReels:state.likedReels, pollVotes:state.pollVotes, following:state.following})); return true; } catch (_) { return false; }
   }
   try { storage.setItem(STATE_KEY, JSON.stringify(state)); return true; }
   catch (_) { toast('Browser storage is full. Remove a large demo attachment or export your data.'); return false; }
@@ -127,6 +128,9 @@ function renderPost(p, showComments=false) {
   const id=String(p.id);
   const liked=remoteMode?likedRemote.has(id):(!!p.liked||likedSeed.has(id));
   const likeCount=Number(p.likes_count!=null?p.likes_count:p.likes||0);
+  const followKey=remoteMode?p.user_id:p.name;
+  const isSelf=remoteMode?(!!user&&p.user_id===user.id):String(p.name||'')===String((profile||state.profile||{}).username||'');
+  const followButton=(!isSelf&&followKey)?'<button class="tool-button" data-action="follow-user" data-id="'+escapeHtml(followKey)+'">'+(state.following.includes(String(followKey))?'Following':'Follow')+'</button>':'';
   const comments=Array.isArray(p.comments)?p.comments:[];
   const media=p.media_url&&/^https:\/\//.test(p.media_url)?'<img class="post-media" loading="lazy" src="'+escapeHtml(p.media_url)+'" alt="Post attachment">':(p.attachmentData&&/^data:image\/(png|jpeg|gif|webp|avif);base64,/i.test(p.attachmentData)?'<img class="post-media" loading="lazy" src="'+p.attachmentData+'" alt="Post attachment">':'');
   let pollMarkup='';
@@ -144,7 +148,7 @@ function renderPost(p, showComments=false) {
   if(showComments) {
     replyMarkup='<section class="comments"><div class="tiny muted">'+(comments.length?comments.length+' replies':'Start the conversation')+'</div>'+comments.map(renderComment).join('')+'<form class="comment-form" data-comment-form="'+escapeHtml(id)+'"><input name="comment" maxlength="500" required placeholder="Write a reply…" aria-label="Write a reply"><button class="button button-primary button-small" type="submit">Reply</button></form><div class="comment-tools"><label>Text style <select data-comment-font="'+escapeHtml(id)+'">'+fontOptions('standard')+'</select></label><span class="tiny muted">Each reply can have its own font.</span></div></section>';
   }
-  return '<article class="post-card" data-post="'+escapeHtml(id)+'"><div class="post-header">'+renderAvatar(p.name,p.avatar,p.avatar_url)+'<div class="post-author"><div class="author-meta"><span class="author-name">'+escapeHtml(p.name||'Member')+'</span><span class="handle">'+escapeHtml(p.handle||userHandle(p.name))+'</span>'+(p.badge?'<span class="pill">'+escapeHtml(p.badge)+'</span>':'')+'</div><div class="timestamp">'+formatTime(p.created_at||p.time)+'</div></div><button class="post-dots" data-action="post-menu" data-id="'+escapeHtml(id)+'" aria-label="Post options">···</button></div><div class="post-body '+fontClass(p.font_family||p.font)+'">'+escapeHtml(p.body||p.text||'')+'</div>'+media+pollMarkup+'<span class="category-chip">'+escapeHtml(p.category||p.tag||'GENERAL')+'</span><div class="post-actions"><button class="action-button '+(liked?'active':'')+'" data-action="like" data-id="'+escapeHtml(id)+'"><span class="symbol">'+(liked?'♥':'♡')+'</span>'+likeCount+'</button><button class="action-button" data-action="comments" data-id="'+escapeHtml(id)+'"><span class="symbol">▱</span>'+(p.comments_count||comments.length||0)+'</button><button class="action-button" data-action="share" data-id="'+escapeHtml(id)+'"><span class="symbol">↗</span>Share</button><button class="action-button" data-action="repost" data-id="'+escapeHtml(id)+'"><span class="symbol">⟳</span>Repost</button><span class="action-spacer"></span><button class="action-button '+(state.bookmarks.includes(id)?'active':'')+'" data-action="bookmark" data-id="'+escapeHtml(id)+'"><span class="symbol">⌑</span>Save</button></div>'+replyMarkup+'</article>';
+  return '<article class="post-card" data-post="'+escapeHtml(id)+'"><div class="post-header">'+renderAvatar(p.name,p.avatar,p.avatar_url)+'<div class="post-author"><div class="author-meta"><span class="author-name">'+escapeHtml(p.name||'Member')+'</span><span class="handle">'+escapeHtml(p.handle||userHandle(p.name))+'</span>'+(p.badge?'<span class="pill">'+escapeHtml(p.badge)+'</span>':'')+followButton+'</div><div class="timestamp">'+formatTime(p.created_at||p.time)+'</div></div><button class="post-dots" data-action="post-menu" data-id="'+escapeHtml(id)+'" aria-label="Post options">···</button></div><div class="post-body '+fontClass(p.font_family||p.font)+'">'+escapeHtml(p.body||p.text||'')+'</div>'+media+pollMarkup+'<span class="category-chip">'+escapeHtml(p.category||p.tag||'GENERAL')+'</span><div class="post-actions"><button class="action-button '+(liked?'active':'')+'" data-action="like" data-id="'+escapeHtml(id)+'"><span class="symbol">'+(liked?'♥':'♡')+'</span>'+likeCount+'</button><button class="action-button" data-action="comments" data-id="'+escapeHtml(id)+'"><span class="symbol">▱</span>'+(p.comments_count||comments.length||0)+'</button><button class="action-button" data-action="share" data-id="'+escapeHtml(id)+'"><span class="symbol">↗</span>Share</button><button class="action-button" data-action="repost" data-id="'+escapeHtml(id)+'"><span class="symbol">⟳</span>Repost</button><span class="action-spacer"></span><button class="action-button '+(state.bookmarks.includes(id)?'active':'')+'" data-action="bookmark" data-id="'+escapeHtml(id)+'"><span class="symbol">⌑</span>Save</button></div>'+replyMarkup+'</article>';
 }
 
 function renderHome() {
@@ -153,7 +157,7 @@ function renderHome() {
 }
 function renderPosts(feed=false) {
   let items=state.posts.slice();
-  if(feed && !remoteMode) items=items.filter(p=>!p.seed || true);
+  if(feed && Array.isArray(state.following) && state.following.length) items=items.filter(p=>state.following.includes(String(remoteMode?p.user_id:p.name)));
   if(feed)items.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   return pageHeading(feed?'Your Feed':'Posts',feed?'A timeline of new posts and conversations.':'Your place for text posts, memes, pictures, polls, links, and discussions.','<button class="button button-small" data-action="focus-compose">＋ Compose</button>')+composer()+'<div class="section-heading"><span>'+(feed?'LATEST POSTS':'THE DISCUSSION BOARD')+'</span><span class="pill">'+items.length+' posts</span></div>'+(items.length?items.map(p=>renderPost(p,commentsOpen.has(String(p.id)))).join(''):'<div class="empty-state"><div class="empty-icon">▤</div><strong>No posts yet</strong>Be the first to start a conversation.</div>')+(remoteMode?'':'<p class="demo-notice">Demo posts are examples. Your new posts are stored only in this browser until a backend is connected.</p>');
 }
@@ -566,6 +570,17 @@ document.addEventListener('click',async event=>{
     const name=btn.getAttribute('data-name')||'Community';state.joinedCommunities=Array.isArray(state.joinedCommunities)?state.joinedCommunities:[];
     if(state.joinedCommunities.includes(name)){state.joinedCommunities=state.joinedCommunities.filter(x=>x!==name);toast('Left '+name+'.')}else{state.joinedCommunities.push(name);addNotification({type:'community',title:'Joined '+name,body:'You can find this community in your local joined list.',unread:true});toast('Joined '+name+'.')}
     saveLocal();renderApp();return
+   }
+   if(action==='follow-user'){
+    if(remoteMode&&db&&user){
+     if(state.following.includes(String(id))){const {error}=await db.from('follows').delete().eq('follower_id',user.id).eq('following_id',id);if(error)throw error;state.following=state.following.filter(x=>String(x)!==String(id));toast('Unfollowed account.')}
+     else {const {error}=await db.from('follows').insert({follower_id:user.id,following_id:id});if(error)throw error;state.following.push(String(id));toast('Following account.')}
+     saveLocal();renderApp();return;
+    }
+    state.following=Array.isArray(state.following)?state.following:[];
+    if(state.following.includes(String(id))){state.following=state.following.filter(x=>String(x)!==String(id));toast('Unfollowed account.')}
+    else {state.following.push(String(id));addNotification({type:'follow',title:'Following '+String(id),body:'Their posts can now appear in your Feed.',unread:true});toast('Following account.')}
+    saveLocal();renderApp();return;
    }
    if(action==='like'){await toggleLike(id);return}
    if(action==='comments'){if(commentsOpen.has(String(id)))commentsOpen.delete(String(id));else commentsOpen.add(String(id));renderApp();if(remoteMode&&commentsOpen.has(String(id)))await refreshComments(id);return}

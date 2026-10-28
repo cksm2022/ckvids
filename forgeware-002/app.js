@@ -277,7 +277,6 @@ async function boot() {
     try {await ensureProfile(user)} catch(err) { console.error(err);showGate('auth','You are signed in, but your profile table is not ready. Run supabase-schema.sql in your project.');return; }
     await refreshRemotePosts();
     showGate('');renderApp();
-    db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){user=null;profile=null;remoteMode=false;showGate('auth');}else if(session){user=session.user;remoteMode=true;ensureProfile(user).then(refreshRemotePosts).catch(console.error)}});
     return;
    }
   } catch(err) {console.error(err);showGate('auth','Backend connection failed. Verify config.js and your Supabase project.');return;}

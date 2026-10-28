@@ -238,7 +238,7 @@ async function ensureProfile(authUser, usernameHint='') {
  if(existing){user=authUser;setProfile(existing);return existing}
  const hinted=usernameHint||authUser.user_metadata?.username||('member_'+authUser.id.slice(0,7));
  const clean=String(hinted).trim().replace(/[^A-Za-z0-9_ -]/g,'').slice(0,24)||('member_'+authUser.id.slice(0,7));
- const {data, error}=await db.from('profiles').insert({id:authUser.id,username:clean,avatar_url:null,bio:''}).select('id,username,avatar_url,bio').single();
+ const {data, error}=await db.from('profiles').insert({id:authUser.id,username:clean,avatar_url:null,bio:'',terms_version:authUser.user_metadata?.terms_version||TERMS_VERSION,terms_accepted_at:authUser.user_metadata?.terms_accepted_at||new Date().toISOString()}).select('id,username,avatar_url,bio,terms_version,terms_accepted_at').single();
  if(error)throw error;
  user=authUser;setProfile(data);return data;
 }

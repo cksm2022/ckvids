@@ -77,18 +77,18 @@ create policy "Profiles are publicly readable"
   on public.profiles for select to anon, authenticated using (true);
 drop policy if exists "Users can create their own profile" on public.profiles;
 create policy "Users can create their own profile"
-  on public.profiles for insert to authenticated with check ((select auth.uid()) = id);
+  on public.profiles for insert to authenticated with check ((select auth.uid()) = id and terms_version = 'revenant-community-rules-0.02' and terms_accepted_at is not null);
 drop policy if exists "Users can update their own profile" on public.profiles;
 create policy "Users can update their own profile"
   on public.profiles for update to authenticated
-  using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+  using ((select auth.uid()) = id) with check ((select auth.uid()) = id and terms_version = 'revenant-community-rules-0.02' and terms_accepted_at is not null);
 
 drop policy if exists "Posts are publicly readable" on public.posts;
 create policy "Posts are publicly readable"
   on public.posts for select to anon, authenticated using (true);
 drop policy if exists "Signed-in users create their own posts" on public.posts;
 create policy "Signed-in users create their own posts"
-  on public.posts for insert to authenticated with check ((select auth.uid()) = user_id);
+  on public.posts for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.terms_version = 'revenant-community-rules-0.02' and p.terms_accepted_at is not null));
 drop policy if exists "Authors can update their own posts" on public.posts;
 create policy "Authors can update their own posts"
   on public.posts for update to authenticated
@@ -102,7 +102,7 @@ create policy "Comments are publicly readable"
   on public.comments for select to anon, authenticated using (true);
 drop policy if exists "Signed-in users create their own comments" on public.comments;
 create policy "Signed-in users create their own comments"
-  on public.comments for insert to authenticated with check ((select auth.uid()) = user_id);
+  on public.comments for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.terms_version = 'revenant-community-rules-0.02' and p.terms_accepted_at is not null));
 drop policy if exists "Authors can delete their own comments" on public.comments;
 create policy "Authors can delete their own comments"
   on public.comments for delete to authenticated using ((select auth.uid()) = user_id);
@@ -112,7 +112,7 @@ create policy "Likes are publicly readable"
   on public.post_likes for select to anon, authenticated using (true);
 drop policy if exists "Users can like as themselves" on public.post_likes;
 create policy "Users can like as themselves"
-  on public.post_likes for insert to authenticated with check ((select auth.uid()) = user_id);
+  on public.post_likes for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.terms_version = 'revenant-community-rules-0.02' and p.terms_accepted_at is not null));
 drop policy if exists "Users can remove their own likes" on public.post_likes;
 create policy "Users can remove their own likes"
   on public.post_likes for delete to authenticated using ((select auth.uid()) = user_id);
@@ -122,7 +122,7 @@ create policy "Users can view their own bookmarks"
   on public.bookmarks for select to authenticated using ((select auth.uid()) = user_id);
 drop policy if exists "Users can create their own bookmarks" on public.bookmarks;
 create policy "Users can create their own bookmarks"
-  on public.bookmarks for insert to authenticated with check ((select auth.uid()) = user_id);
+  on public.bookmarks for insert to authenticated with check ((select auth.uid()) = user_id and exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.terms_version = 'revenant-community-rules-0.02' and p.terms_accepted_at is not null));
 drop policy if exists "Users can delete their own bookmarks" on public.bookmarks;
 create policy "Users can delete their own bookmarks"
   on public.bookmarks for delete to authenticated using ((select auth.uid()) = user_id);

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101012">
+  <meta name="description" content="Revenant Forgeware 0.05 — a social platform prototype.">
+  <title>Revenant — Forgeware 0.05</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/home" aria-label="Revenant Home">
+      <span class="brand-mark">R</span>
+      <span><strong class="brand-name">REVENANT</strong><small>FORGEWARE 0.05</small></span>
+    </a>
+    <form id="command-form" class="commandbar">
+      <span class="command-icon">⌕</span>
+      <input id="command-input" autocomplete="off" placeholder="Search or jump to /posts…" aria-label="Search or command">
+      <kbd>Ctrl K</kbd>
+    </form>
+    <div class="top-actions">
+      <button class="icon-button" data-route="/posts" aria-label="Write a post" title="Write a post">＋</button>
+      <button class="icon-button" id="account-button" aria-label="Account" title="Account">◉</button>
+    </div>
+  </header>
+
+  <div id="gate-root"></div>
+  <div class="app-layout" id="app-layout">
+    <aside class="sidebar">
+      <nav class="nav-card" aria-label="Main navigation">
+        <div class="nav-label">REVENANT</div>
+        <a class="nav-link" data-route="/home" href="#/home"><span>⌂</span>Home</a>
+        <a class="nav-link" data-route="/feed" href="#/feed"><span>◉</span>Feed</a>
+        <a class="nav-link" data-route="/posts" href="#/posts"><span>▤</span>Posts <em>NEW</em></a>
+        <a class="nav-link" data-route="/reels" href="#/reels"><span>▣</span>Reels</a>
+        <a class="nav-link" data-route="/explore" href="#/explore"><span>⌕</span>Explore</a>
+        <a class="nav-link" data-route="/saved" href="#/saved"><span>⌑</span>Saved</a>
+        <a class="nav-link" data-route="/notifications" href="#/notifications"><span>♧</span>Notifications <em id="notification-count">3</em></a>
+        <a class="nav-link" data-route="/communities" href="#/communities"><span>♧</span>Communities</a>
+        <a class="nav-link" data-route="/messages" href="#/messages"><span>✉</span>Messages</a>
+        <a class="nav-link" data-route="/privacy" href="#/privacy"><span>◈</span>Privacy notice</a>
+        <a class="nav-link" data-route="/drafts" href="#/drafts"><span>▧</span>Drafts</a>
+        <div class="nav-label separated">YOUR ACCOUNT</div>
+        <a class="nav-link" data-route="/profile" href="#/profile"><span>◌</span>Profile</a>
+        <a class="nav-link" data-route="/settings" href="#/settings"><span>⚙</span>Settings</a>
+        <a class="nav-link" data-route="/safety" href="#/safety"><span>⌑</span>Safety Center</a>
+        <a class="nav-link" data-route="/terms" href="#/terms"><span>▧</span>Terms & rules</a>
+      </nav>
+      <div class="sidebar-promo">
+        <span class="eyebrow">VERSION 0.05</span>
+        <strong>A social world, still forging.</strong>
+        <p>Shared accounts and posts can be enabled by connecting a Supabase project.</p>
+        <a class="button button-small" href="#/settings">Open settings ↗</a>
+      </div>
+      <div class="sidebar-footer">Revenant · Forgeware 0.05<br>Keep it creative. Keep it safe.</div>
+    </aside>
+
+    <main id="main-content" class="main-content" tabindex="-1"></main>
+
+    <aside class="rightbar">
+      <section class="side-panel">
+        <div class="panel-heading">Popular topics <span class="accent">↗</span></div>
+        <div class="topic-row"><div><b>#IndieGames</b><small>Gaming · community topic</small></div><span>↗</span></div>
+        <div class="topic-row"><div><b>Pixel art</b><small>Art & design</small></div><span>↗</span></div>
+        <div class="topic-row"><div><b>Minecraft</b><small>Gaming</small></div><span>↗</span></div>
+        <div class="topic-row"><div><b>Web building</b><small>Technology</small></div><span>↗</span></div>
+      </section>
+      <section class="side-panel">
+        <div class="panel-heading">Forgeware notes</div>
+        <div class="feature-row"><span class="feature-icon">⌘</span><div><b>Command navigation</b><small>Use Ctrl+K or type /.</small></div></div>
+        <div class="feature-row"><span class="feature-icon">Aa</span><div><b>Custom comments</b><small>Choose a font per post or reply.</small></div></div>
+        <div class="feature-row"><span class="feature-icon">☁</span><div><b>Shared mode</b><small>Connect a backend in Settings.</small></div></div>
+      </section>
+      <div class="tiny muted">Prototype, not a fully launched social service.</div>
+    </aside>
+  </div>
+
+  <nav class="mobile-nav" aria-label="Mobile navigation">
+    <a data-route="/home" href="#/home"><span>⌂</span>Home</a>
+    <a data-route="/feed" href="#/feed"><span>◉</span>Feed</a>
+    <a data-route="/posts" href="#/posts"><span>▤</span>Posts</a>
+    <a data-route="/reels" href="#/reels"><span>▣</span>Reels</a>
+    <a data-route="/explore" href="#/explore"><span>⌕</span>Explore</a>
+    <a data-route="/messages" href="#/messages"><span>✉</span>Messages</a>
+  </nav>
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

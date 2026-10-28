@@ -1,0 +1,26 @@
+name: Publish Forgeware 0.05 to GitHub Pages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Upload Forgeware 0.05 site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./forgeware-005
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4

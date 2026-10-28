@@ -1,0 +1,40 @@
+name: Forgeware 0.05 checks
+on:
+  push:
+    branches: [main]
+    paths: ["forgeware-005/**", ".github/workflows/forgeware-005-check.yml"]
+  pull_request:
+    paths: ["forgeware-005/**", ".github/workflows/forgeware-005-check.yml"]
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Validate Forgeware 0.05
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: node --check forgeware-005/app.js
+      - name: Check release files, routes and schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s forgeware-005/index.html
+          test -s forgeware-005/styles.css
+          test -s forgeware-005/app.js
+          test -s forgeware-005/config.js
+          test -s forgeware-005/supabase-schema.sql
+          test -s forgeware-005/PRIVACY.md
+          grep -q 'FORGEWARE 0.05' forgeware-005/index.html
+          grep -q 'function sendMessage' forgeware-005/app.js
+          grep -q 'function renderCommunityPage' forgeware-005/app.js
+          grep -q 'function refreshNotifications' forgeware-005/app.js
+          grep -q 'function renderPrivacyPolicy' forgeware-005/app.js
+          grep -q 'media_type' forgeware-005/app.js
+          grep -q 'create table if not exists public.direct_messages' forgeware-005/supabase-schema.sql
+          grep -q 'create table if not exists public.communities' forgeware-005/supabase-schema.sql
+          grep -q 'create table if not exists public.notifications' forgeware-005/supabase-schema.sql
+          grep -q 'direct_messages_select_participant' forgeware-005/supabase-schema.sql

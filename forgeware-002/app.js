@@ -19,6 +19,7 @@ const $ = (q, root = document) => root.querySelector(q);
 const $$ = (q, root = document) => Array.from(root.querySelectorAll(q));
 const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const initials = name => String(name || 'R').trim().split(/[\s_-]+/).filter(Boolean).map(s => s[0]).join('').slice(0,2).toUpperCase() || 'R';
+function makeDemoPassword(length=20) { const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%'; const bytes=new Uint8Array(length); try { window.crypto.getRandomValues(bytes); } catch (_) { for(let i=0;i<length;i++)bytes[i]=Math.floor(Math.random()*256); } return Array.from(bytes,b=>chars[b%chars.length]).join(''); }
 const safeImage = file => !!file && /^image\/(png|jpeg|gif|webp|avif)$/i.test(file.type);
 const safeName = name => String(name || 'upload').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-90);
 const demoSeeds = [

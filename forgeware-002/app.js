@@ -415,7 +415,8 @@ document.addEventListener('click',async event=>{
    else if(action==='read-terms') { termsOpenedThisVisit=true;showGate('terms'); }
    else if(action==='accept-terms') {
     storage.setItem(TERMS_KEY,JSON.stringify({version:TERMS_VERSION,acceptedAt:new Date().toISOString()}));
-    if(db){authMode='signup';showGate('auth')}
+    if(db&&!user){authMode='signup';showGate('auth')}
+    else if(db&&user){gateStep='';showGate('');navigate('/home');renderApp()}
     else showGate('profile');
    }
    else if(action==='auth-signup'){authMode='signup';showGate('auth')}

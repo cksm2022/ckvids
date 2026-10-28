@@ -49,6 +49,8 @@ let selectedFont = 'standard';
 let importedFontName = '';
 let customFontReady = false;
 let customFontFace = null;
+let pendingLocalProfile = null;
+let generatedDemoPassword = '';
 let toastTimer = null;
 const commentsOpen = new Set();
 const likedRemote = new Set();
@@ -216,6 +218,8 @@ function showGate(step, message='') {
   body=renderAuthGate(message);
  } else if(step==='profile') {
   body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong><small>YOUR SPACE IS WAITING</small></span></div><h1>Make yourself at home.</h1><p class="gate-copy">Create a local demo profile to explore Forgeware 0.02. Without a backend connection, posts stay in this browser and aren’t shared with other users.</p><form id="local-profile-form"><label class="field-label" for="local-name">Choose a display name</label><input class="field" id="local-name" maxlength="24" required placeholder="e.g. PixelFox"><button type="submit" class="button button-primary button-block">Create demo profile</button></form><div class="gate-actions"><button class="button button-quiet" data-gate="quick-local">Quick setup — generate a name</button></div><p class="gate-footnote">This is a local prototype profile, not an online account.</p>';
+ } else if(step==='local-credentials') {
+  body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong><small>QUICK DEMO SETUP</small></span></div><span class="eyebrow">SAVE THESE DETAILS</span><h1>Your demo profile is ready.</h1><p class="gate-copy">Here is your generated username and demo password. The password is shown once and is not used to authenticate you; this profile exists only in this browser.</p><div class="credentials"><label>GENERATED USERNAME</label><code id="generated-demo-username">'+escapeHtml((pendingLocalProfile||{}).username||'')+'</code><label>GENERATED DEMO PASSWORD</label><code id="generated-demo-password">'+escapeHtml(generatedDemoPassword)+'</code></div><button class="button button-block" data-gate="copy-demo-credentials">Copy details</button><button class="button button-primary button-block" style="margin-top:9px" data-gate="enter-demo">Enter Revenant ↗</button><p class="gate-footnote">This is convenience for the prototype, not a real online account. Configure Supabase to use accounts and posts shared across devices.</p>';
  } else if(step==='under13') {
   body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong></span></div><h1>Not just yet.</h1><p class="gate-copy">Revenant is intended for ages 13 and up. Here’s a safer place for younger viewers.</p><button class="button button-primary button-block" data-gate="kids">Go to YouTube Kids ↗</button>';
  } else {
@@ -422,7 +426,9 @@ document.addEventListener('click',async event=>{
    else if(action==='auth-signup'){authMode='signup';showGate('auth')}
    else if(action==='auth-login'){authMode='login';showGate('auth')}
    else if(action==='demo-profile')showGate('profile');
-   else if(action==='quick-local'){const name='Reven_'+Math.random().toString(36).slice(2,7);state.profile={username:name,initials:initials(name)};saveLocal();setProfile(state.profile);showGate('');navigate('/home');renderApp()}
+   else if(action==='quick-local'){const name='Reven_'+Math.random().toString(36).slice(2,7);pendingLocalProfile={username:name,initials:initials(name)};generatedDemoPassword=makeDemoPassword();showGate('local-credentials')}
+   else if(action==='copy-demo-credentials'){const text='Username: '+((pendingLocalProfile||{}).username||'')+'\\nDemo password: '+generatedDemoPassword;if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);toast('Demo details copied.')}else toast('Clipboard unavailable; select and copy the details manually.')}
+   else if(action==='enter-demo'){state.profile=pendingLocalProfile||{username:'Reven_'+Math.random().toString(36).slice(2,7),initials:'R'};pendingLocalProfile=null;generatedDemoPassword='';saveLocal();setProfile(state.profile);gateStep='';showGate('');navigate('/home');renderApp()}
    else if(action==='kids')location.href='https://www.youtubekids.com/';
   } catch(err){console.error(err);toast(err.message||'Something went wrong.')}
   return;

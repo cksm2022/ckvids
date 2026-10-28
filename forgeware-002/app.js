@@ -246,7 +246,14 @@ async function ensureProfile(authUser, usernameHint='') {
  if(existing){user=authUser;setProfile(existing);return existing}
  const hinted=usernameHint||authUser.user_metadata?.username||('member_'+authUser.id.slice(0,7));
  const clean=String(hinted).trim().replace(/[^A-Za-z0-9_ -]/g,'').slice(0,24)||('member_'+authUser.id.slice(0,7));
- const {data, error}=await db.from('profiles').insert({id:authUser.id,username:clean,avatar_url:null,bio:'',terms_version:authUser.user_metadata?.terms_version||TERMS_VERSION,terms_accepted_at:authUser.user_metadata?.terms_accepted_at||new Date().toISOString()}).select('id,username,avatar_url,bio,terms_version,terms_accepted_at').single();
+ const payload={id:authUser.id,username:clean,avatar_url:null,bio:'',terms_version:authUser.user_metadata?.terms_version||TERMS_VERSION,terms_accepted_at:authUser.user_metadata?.terms_accepted_at||new Date().toISOString()};
+ let {data,error}=await db.from('profiles').insert(payload).select('id,username,avatar_url,bio,terms_version,terms_accepted_at').single();
+ if(error&&error.code==='23505'){
+  const fallback=('Revenant_'+authUser.id.replace(/-/g,'').slice(0,8)).slice(0,24);
+  const retry=await db.from('profiles').insert({...payload,username:fallback}).select('id,username,avatar_url,bio,terms_version,terms_accepted_at').single();
+  if(retry.error)throw retry.error;
+  data=retry.data;error=null;toast('That username was already taken. We assigned '+fallback+' instead. You can change it in Settings.');
+ }
  if(error)throw error;
  user=authUser;setProfile(data);return data;
 }

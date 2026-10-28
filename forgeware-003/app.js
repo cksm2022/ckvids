@@ -513,7 +513,7 @@ document.addEventListener('click',async event=>{
    else if(action==='accept-terms') {
     storage.setItem(TERMS_KEY,JSON.stringify({version:TERMS_VERSION,acceptedAt:new Date().toISOString()}));
     if(db&&!user){const result=await db.auth.getSession();if(result.error)throw result.error;if(result.data.session){user=result.data.session.user;remoteMode=true;await ensureProfile(user);gateStep='';showGate('');await refreshRemotePosts();navigate('/home');renderApp()}else{authMode='signup';showGate('auth')}}
-    else if(db&&user){gateStep='';showGate('');navigate('/home');renderApp()}
+    else if(db&&user){const acceptedAt=new Date().toISOString();const {error:termsError}=await db.from('profiles').update({terms_version:TERMS_VERSION,terms_accepted_at:acceptedAt}).eq('id',user.id);if(termsError)throw termsError;gateStep='';showGate('');navigate('/home');renderApp()}
     else showGate('profile');
    }
    else if(action==='auth-signup'){authMode='signup';showGate('auth')}

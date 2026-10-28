@@ -241,6 +241,7 @@ function navigate(path) {
 function showGate(step, message='') {
  gateStep=step;
  const root=$('#gate-root');
+ if(step==='done'||!step){root.innerHTML='';return}
  let body='';
  if(step==='age') {
   body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong><small>FORGEWARE 0.03</small></span></div><span class="eyebrow">BEFORE YOU ENTER</span><h1>First things first.</h1><p class="gate-copy">Revenant is intended for users aged 13 and older. Enter your birthday to continue.</p><form id="age-form"><label class="field-label" for="birthday">Your date of birth</label><input class="field" id="birthday" type="date" max="'+new Date().toISOString().slice(0,10)+'" required><div class="notice">This prototype checks the date you enter but does not verify your age. A public service needs appropriate age-safety and privacy measures.</div><button class="button button-primary button-block" type="submit">Continue →</button></form>';
@@ -249,7 +250,7 @@ function showGate(step, message='') {
  } else if(step==='birch') {
   body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong><small>QUICK REALITY CHECK</small></span></div><div class="joke">Burch.</div><h1>Come on. You probably didn’t read that, did you?</h1><p class="gate-copy">Don’t worry, we made it short as hell for a reason.</p><div class="notice">No mind reading here. You agreed without opening the rules, so we’re sending you back to them.</div><button class="button button-primary button-block" data-gate="read-terms">Fine, show me the rules</button>';
  } else if(step==='terms') {
-  body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong><small>THE SMALL PRINT. ACTUALLY SMALL.</small></span></div><span class="eyebrow">COMMUNITY RULES · V0.02</span><h1>The rules. All six.</h1>'+rulesMarkup(true)+'<button class="button button-primary button-block" style="margin-top:15px" data-gate="accept-terms">I reviewed the rules — continue</button><p class="gate-footnote">This is a prototype rules summary, not the complete legal Terms of Service or Privacy Policy.</p>';
+  body='<div class="gate-brand"><span class="brand-mark">R</span><span><strong class="brand-name">REVENANT</strong><small>THE SMALL PRINT. ACTUALLY SMALL.</small></span></div><span class="eyebrow">COMMUNITY RULES · V0.03</span><h1>The rules. All six.</h1>'+rulesMarkup(true)+'<button class="button button-primary button-block" style="margin-top:15px" data-gate="accept-terms">I reviewed the rules — continue</button><p class="gate-footnote">This is a prototype rules summary, not the complete legal Terms of Service or Privacy Policy.</p>';
  } else if(step==='auth') {
   body=renderAuthGate(message);
  } else if(step==='profile') {

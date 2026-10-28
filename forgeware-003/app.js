@@ -222,7 +222,7 @@ function renderApp() {
  const notificationBadge=$('#notification-count');if(notificationBadge){const unread=(state.notifications||[]).filter(n=>n.unread).length;notificationBadge.textContent=unread;notificationBadge.classList.toggle('hidden',!unread)}
  const postBody=$('#post-body');if(postBody&&state.drafts&&state.drafts.postDraft&&postBody.value!==state.drafts.postDraft)postBody.value=state.drafts.postDraft;
  if($('#poll-builder'))$('#poll-builder').classList.toggle('hidden',composerMode!=='poll');
- $('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));
+ $$('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));
  document.body.classList.toggle('reduce-motion',!!state.reduceMotion);
 }
 function routeFromHash() {
@@ -537,7 +537,7 @@ document.addEventListener('click',async event=>{
   const action=btn.getAttribute('data-action'),id=btn.getAttribute('data-id');
   try {
    if(action==='focus-compose'){navigate('/posts');setTimeout(()=>$('#post-body')?.focus(),70);return}
-   if(action==='set-post-type'){composerMode=btn.getAttribute('data-type')==='poll'?'poll':'post';const builder=$('#poll-builder');if(builder)builder.classList.toggle('hidden',composerMode!=='poll');$('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));if(composerMode==='poll')toast('Add a question and at least two poll options.');return}
+   if(action==='set-post-type'){composerMode=btn.getAttribute('data-type')==='poll'?'poll':'post';const builder=$('#poll-builder');if(builder)builder.classList.toggle('hidden',composerMode!=='poll');$$('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));if(composerMode==='poll')toast('Add a question and at least two poll options.');return}
    if(action==='save-draft'){state.drafts=state.drafts||{};state.drafts.postDraft=$('#post-body')?.value||'';saveLocal();toast(state.drafts.postDraft.trim()?'Draft saved in this browser.':'Draft cleared.');return}
    if(action==='continue-draft'){navigate('/posts');setTimeout(()=>$('#post-body')?.focus(),60);return}
    if(action==='delete-draft'){state.drafts.postDraft='';saveLocal();renderApp();toast('Draft deleted.');return}

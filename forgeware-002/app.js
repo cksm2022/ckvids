@@ -172,7 +172,7 @@ function renderApp() {
  if(!profile&&!state.profile){showGate(db?'auth':'profile');return}
  updateHeader();
  currentRoute=routeFromHash();
- $('.nav-link,.mobile-nav a[data-route]').forEach(a=>a.classList.toggle('active',a.getAttribute('data-route')===currentRoute));
+ $$('.nav-link,.mobile-nav a[data-route]').forEach(a=>a.classList.toggle('active',a.getAttribute('data-route')===currentRoute));
  const main=$('#main-content');
  if(currentRoute==='/home')main.innerHTML=renderHome();
  else if(currentRoute==='/feed')main.innerHTML=renderPosts(true);

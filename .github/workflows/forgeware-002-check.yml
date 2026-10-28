@@ -1,0 +1,40 @@
+name: Forgeware 0.02 checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "forgeware-002/**"
+      - ".github/workflows/forgeware-002-check.yml"
+  pull_request:
+    paths:
+      - "forgeware-002/**"
+      - ".github/workflows/forgeware-002-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate prototype
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: node --check forgeware-002/app.js
+      - name: Check required app files
+        shell: bash
+        run: |
+          test -s forgeware-002/index.html
+          test -s forgeware-002/styles.css
+          test -s forgeware-002/app.js
+          test -s forgeware-002/config.js
+          test -s forgeware-002/supabase-schema.sql
+          grep -q 'FORGEWARE 0.02' forgeware-002/index.html
+          grep -q 'revenant_fw002_terms' forgeware-002/app.js
+          grep -q 'data-gate="agree"' forgeware-002/app.js

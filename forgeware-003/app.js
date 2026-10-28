@@ -525,6 +525,36 @@ document.addEventListener('click',async event=>{
   const action=btn.getAttribute('data-action'),id=btn.getAttribute('data-id');
   try {
    if(action==='focus-compose'){navigate('/posts');setTimeout(()=>$('#post-body')?.focus(),70);return}
+   if(action==='set-post-type'){composerMode=btn.getAttribute('data-type')==='poll'?'poll':'post';const builder=$('#poll-builder');if(builder)builder.classList.toggle('hidden',composerMode!=='poll');$('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));if(composerMode==='poll')toast('Add a question and at least two poll options.');return}
+   if(action==='save-draft'){state.drafts=state.drafts||{};state.drafts.postDraft=$('#post-body')?.value||'';saveLocal();toast(state.drafts.postDraft.trim()?'Draft saved in this browser.':'Draft cleared.');return}
+   if(action==='continue-draft'){navigate('/posts');setTimeout(()=>$('#post-body')?.focus(),60);return}
+   if(action==='delete-draft'){state.drafts.postDraft='';saveLocal();renderApp();toast('Draft deleted.');return}
+   if(action==='explore-category'){exploreCategory=btn.getAttribute('data-category')||'ALL';renderApp();return}
+   if(action==='topic-search'){exploreQuery=btn.getAttribute('data-topic')||'';exploreCategory='ALL';navigate('/explore');return}
+   if(action==='mark-notifications-read'){state.notifications=(state.notifications||[]).map(n=>({...n,unread:false}));saveLocal();renderApp();toast('Notifications marked as read.');return}
+   if(action==='poll-vote'){
+    const post=state.posts.find(x=>String(x.id)===String(id));const option=Number(btn.getAttribute('data-option'));const poll=post&&(post.poll||(post.poll_data?{options:post.poll_data.options||[],votes:post.poll_votes||[],votedIndex:post.voted_index}:null));
+    if(!post||!poll||!Number.isInteger(option)||option<0||option>=poll.options.length){toast('This poll is unavailable.');return}
+    if(Number.isInteger(poll.votedIndex)){toast('You have already voted in this poll.');return}
+    if(remoteMode&&db&&user){const {error}=await db.from('poll_votes').insert({post_id:id,user_id:user.id,option_index:option});if(error)throw error;await refreshRemotePosts();toast('Vote recorded.');return}
+    poll.votes=Array.isArray(poll.votes)?poll.votes:poll.options.map(()=>0);poll.votes[option]=(poll.votes[option]||0)+1;poll.votedIndex=option;state.pollVotes.push({post_id:id,option_index:option});saveLocal();renderApp();toast('Vote recorded locally.');return
+   }
+   if(action==='repost'){
+    const original=state.posts.find(x=>String(x.id)===String(id));if(!original)return;
+    const body='↻ Reposted from '+(original.name||'a member')+':\\n\\n'+(original.body||original.text||'');
+    if(remoteMode&&db&&user){const {error}=await db.from('posts').insert({user_id:user.id,body,category:original.category||original.tag||'GENERAL',font_family:original.font_family||'standard',post_type:'post',poll_data:null,media_url:null});if(error)throw error;await refreshRemotePosts();toast('Repost published.');return}
+    state.posts.unshift({id:'repost-'+Date.now(),name:(profile||state.profile||{}).username||'Visitor',handle:userHandle((profile||state.profile||{}).username||'Visitor'),created_at:new Date().toISOString(),category:original.category||original.tag||'GENERAL',body,font_family:'standard',likes_count:0,comments_count:0,comments:[],own:true,repost_of:id});saveLocal();renderApp();toast('Reposted to your local feed.');return
+   }
+   if(action==='create-community'){
+    const name=prompt('Name your community (2–32 characters):');if(!name||name.trim().length<2)return;
+    state.communities=Array.isArray(state.communities)?state.communities:[];state.communities.unshift({id:'local-community-'+Date.now(),name:name.trim().slice(0,32),description:'A new community created in this browser.',category:'COMMUNITY',members:1});
+    state.joinedCommunities.push('local-community-'+Date.now());saveLocal();renderApp();toast('Community created locally.');return
+   }
+   if(action==='join-community'){
+    const name=btn.getAttribute('data-name')||'Community';state.joinedCommunities=Array.isArray(state.joinedCommunities)?state.joinedCommunities:[];
+    if(state.joinedCommunities.includes(name)){state.joinedCommunities=state.joinedCommunities.filter(x=>x!==name);toast('Left '+name+'.')}else{state.joinedCommunities.push(name);addNotification({type:'community',title:'Joined '+name,body:'You can find this community in your local joined list.',unread:true});toast('Joined '+name+'.')}
+    saveLocal();renderApp();return
+   }
    if(action==='like'){await toggleLike(id);return}
    if(action==='comments'){if(commentsOpen.has(String(id)))commentsOpen.delete(String(id));else commentsOpen.add(String(id));renderApp();if(remoteMode&&commentsOpen.has(String(id)))await refreshComments(id);return}
    if(action==='share'){const p=state.posts.find(x=>String(x.id)===String(id));const text=p?(p.body||p.text||'')+' — Revenant':'';if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);toast('Post text copied. Shareable public URLs come later.')}else toast('Clipboard not available in this browser.');return}

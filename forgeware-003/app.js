@@ -299,11 +299,14 @@ async function refreshRemotePosts() {
  const {data:likes,error:likesError}=await db.from('post_likes').select('post_id,user_id');
  if(!likesError){likedRemote.clear();const counts={};(likes||[]).forEach(l=>{counts[l.post_id]=(counts[l.post_id]||0)+1;if(user&&l.user_id===user.id)likedRemote.add(l.post_id)});remotePosts=(rows||[]).map(r=>({...r,name:r.profiles?.username||'Member',handle:userHandle(r.profiles?.username||'Member'),avatar_url:r.profiles?.avatar_url,likes_count:counts[r.id]||0,comments_count:0,comments:[]}));}
  else remotePosts=(rows||[]).map(r=>({...r,name:r.profiles?.username||'Member',handle:userHandle(r.profiles?.username||'Member'),avatar_url:r.profiles?.avatar_url,likes_count:0,comments_count:0,comments:[]}));
- const {data:pollRows,error:pollErr}=await db.from('poll_votes').select('post_id,user_id,option_index');
- if(!pollErr){
-  const pollCounts={},pollMine={};
-  (pollRows||[]).forEach(v=>{if(!pollCounts[v.post_id])pollCounts[v.post_id]=[];pollCounts[v.post_id][v.option_index]=(pollCounts[v.post_id][v.option_index]||0)+1;if(user&&v.user_id===user.id)pollMine[v.post_id]=v.option_index});
-  remotePosts.forEach(p=>{if(p.post_type==='poll'&&p.poll_data&&Array.isArray(p.poll_data.options)){p.poll={options:p.poll_data.options,votes:p.poll_data.options.map((_,i)=>(pollCounts[p.id]||[])[i]||0),votedIndex:Object.prototype.hasOwnProperty.call(pollMine,p.id)?pollMine[p.id]:null}}});
+ const pollIds=remotePosts.filter(p=>p.post_type==='poll'&&p.poll_data&&Array.isArray(p.poll_data.options)).map(p=>p.id);
+ if(pollIds.length){
+  const {data:pollRows,error:pollErr}=await db.rpc('get_poll_results',{post_ids:pollIds});
+  if(!pollErr){
+   const pollCounts={},pollMine={};
+   (pollRows||[]).forEach(v=>{if(!pollCounts[v.post_id])pollCounts[v.post_id]=[];pollCounts[v.post_id][v.option_index]=Number(v.vote_count||0);if(v.viewer_option!==null&&v.viewer_option!==undefined)pollMine[v.post_id]=Number(v.viewer_option)});
+   remotePosts.forEach(p=>{if(p.post_type==='poll'&&p.poll_data&&Array.isArray(p.poll_data.options)){p.poll={options:p.poll_data.options,votes:p.poll_data.options.map((_,i)=>(pollCounts[p.id]||[])[i]||0),votedIndex:Object.prototype.hasOwnProperty.call(pollMine,p.id)?pollMine[p.id]:null}}});
+  } else console.warn('Poll results are unavailable until the 0.03 schema is applied.',pollErr);
  }
  const {data:commentRows,error:commentError}=await db.from('comments').select('post_id');
  if(!commentError){const counts={};(commentRows||[]).forEach(c=>counts[c.post_id]=(counts[c.post_id]||0)+1);remotePosts.forEach(p=>p.comments_count=counts[p.id]||0)}

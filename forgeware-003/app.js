@@ -278,7 +278,7 @@ async function ensureProfile(authUser, usernameHint='') {
  if(!db||!authUser)return null;
  const {data:existing,error:fetchErr}=await db.from('profiles').select('id,username,avatar_url,bio').eq('id',authUser.id).maybeSingle();
  if(fetchErr)throw fetchErr;
- if(existing){user=authUser;setProfile(existing);return existing}
+ if(existing){const {data:updated,error:updateError}=await db.from('profiles').update({terms_version:TERMS_VERSION,terms_accepted_at:new Date().toISOString()}).eq('id',authUser.id).select('id,username,avatar_url,bio,terms_version,terms_accepted_at').single();if(updateError)throw updateError;user=authUser;setProfile(updated);return updated}
  const hinted=usernameHint||authUser.user_metadata?.username||('member_'+authUser.id.slice(0,7));
  const clean=String(hinted).trim().replace(/[^A-Za-z0-9_ -]/g,'').slice(0,24)||('member_'+authUser.id.slice(0,7));
  const payload={id:authUser.id,username:clean,avatar_url:null,bio:'',terms_version:authUser.user_metadata?.terms_version||TERMS_VERSION,terms_accepted_at:authUser.user_metadata?.terms_accepted_at||new Date().toISOString()};
@@ -310,6 +310,7 @@ async function refreshRemotePosts() {
  }
  const {data:commentRows,error:commentError}=await db.from('comments').select('post_id');
  if(!commentError){const counts={};(commentRows||[]).forEach(c=>counts[c.post_id]=(counts[c.post_id]||0)+1);remotePosts.forEach(p=>p.comments_count=counts[p.id]||0)}
+ if(user){const {data:savedRows,error:savedError}=await db.from('bookmarks').select('post_id').eq('user_id',user.id);if(!savedError)state.bookmarks=(savedRows||[]).map(row=>String(row.post_id));}
  state.posts=remotePosts;
  renderApp();
 }

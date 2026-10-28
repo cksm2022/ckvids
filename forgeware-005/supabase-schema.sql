@@ -131,12 +131,12 @@ create policy "Users can delete their own bookmarks"
 -- Forgeware 0.05 additions: post types and polls.
 alter table public.posts add column if not exists post_type text not null default 'post';
 alter table public.posts add column if not exists poll_data jsonb;
-do $
+do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'posts_post_type_check') then
     alter table public.posts add constraint posts_post_type_check check (post_type in ('post','poll'));
   end if;
-end $;
+end $$;
 
 create table if not exists public.poll_votes (
   post_id uuid not null references public.posts(id) on delete cascade,

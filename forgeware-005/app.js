@@ -648,7 +648,7 @@ async function publishPost(form) {
   const payload={user_id:user.id,body,category,font_family:font,media_url:mediaUrl,media_type:mediaType,community_id:postCommunityId,post_type:composerMode==='poll'?'poll':'post',poll_data:composerMode==='poll'?{options:pollOptions}:null};
   const {error}=await db.from('posts').insert(payload).select('id').single();
   if(error)throw error;
-  selectedFile=null;composerMode='post';state.drafts.postDraft='';saveLocal();await refreshRemotePosts();renderApp();toast(payload.post_type==='poll'?'Poll published to shared Revenant.':'Post published to shared Revenant.');return;
+  selectedFile=null;composerMode='post';state.drafts.postDraft='';saveLocal();await refreshRemotePosts();if(routeFromHash()==='/community')await refreshCommunityPosts();renderApp();toast(payload.post_type==='poll'?'Poll published to shared Revenant.':'Post published to shared Revenant.');return;
  }
  const postCommunityId=routeFromHash()==='/community'&&activeCommunityId?activeCommunityId:null;
  const p={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:(profile||state.profile||{}).username||'Visitor',handle:userHandle((profile||state.profile||{}).username||'Visitor'),created_at:new Date().toISOString(),category,body,font_family:font,likes_count:0,comments_count:0,comments:[],own:true,community_id:postCommunityId,post_type:composerMode==='poll'?'poll':'post',poll:composerMode==='poll'?{options:pollOptions,votes:pollOptions.map(()=>0),votedIndex:null}:null};

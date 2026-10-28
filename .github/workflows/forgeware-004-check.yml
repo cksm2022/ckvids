@@ -1,0 +1,47 @@
+name: Forgeware 0.04 checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "forgeware-004/**"
+      - ".github/workflows/forgeware-004-check.yml"
+  pull_request:
+    paths:
+      - "forgeware-004/**"
+      - ".github/workflows/forgeware-004-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Forgeware 0.04
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: node --check forgeware-004/app.js
+      - name: Check required files and safety workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s forgeware-004/index.html
+          test -s forgeware-004/styles.css
+          test -s forgeware-004/app.js
+          test -s forgeware-004/config.js
+          test -s forgeware-004/supabase-schema.sql
+          grep -q 'FORGEWARE 0.04' forgeware-004/index.html
+          grep -q 'function renderSafetyCenter' forgeware-004/app.js
+          grep -q 'function submitContentReport' forgeware-004/app.js
+          grep -q "create table if not exists public.account_blocks" forgeware-004/supabase-schema.sql
+          grep -q "create table if not exists public.account_mutes" forgeware-004/supabase-schema.sql
+          grep -q "create table if not exists public.content_reports" forgeware-004/supabase-schema.sql
+          grep -q 'account_blocks_select_own' forgeware-004/supabase-schema.sql
+          grep -q 'account_mutes_select_own' forgeware-004/supabase-schema.sql
+          grep -q 'content_reports_select_own' forgeware-004/supabase-schema.sql

@@ -200,6 +200,10 @@ function renderApp() {
  if(currentRoute==='/home')main.innerHTML=renderHome();
  else if(currentRoute==='/feed')main.innerHTML=renderPosts(true);
  else if(currentRoute==='/posts')main.innerHTML=renderPosts(false);
+ else if(currentRoute==='/explore')main.innerHTML=renderExplore();
+ else if(currentRoute==='/saved')main.innerHTML=renderSaved();
+ else if(currentRoute==='/notifications')main.innerHTML=renderNotifications();
+ else if(currentRoute==='/drafts')main.innerHTML=renderDrafts();
  else if(currentRoute==='/reels')main.innerHTML=renderReels();
  else if(currentRoute==='/terms')main.innerHTML=renderTerms();
  else if(currentRoute==='/settings')main.innerHTML=renderSettings();
@@ -208,6 +212,10 @@ function renderApp() {
  else if(currentRoute==='/messages')main.innerHTML=renderMessages();
  else main.innerHTML=renderHelp();
  $('#main-content').focus({preventScroll:true});
+ const notificationBadge=$('#notification-count');if(notificationBadge){const unread=(state.notifications||[]).filter(n=>n.unread).length;notificationBadge.textContent=unread;notificationBadge.classList.toggle('hidden',!unread)}
+ const postBody=$('#post-body');if(postBody&&state.drafts&&state.drafts.postDraft&&postBody.value!==state.drafts.postDraft)postBody.value=state.drafts.postDraft;
+ if($('#poll-builder'))$('#poll-builder').classList.toggle('hidden',composerMode!=='poll');
+ $('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));
  document.body.classList.toggle('reduce-motion',!!state.reduceMotion);
 }
 function routeFromHash() {

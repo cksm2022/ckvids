@@ -168,7 +168,7 @@ create policy "Users can vote once on valid polls"
         and po.post_type = 'poll'
         and jsonb_typeof(po.poll_data->'options') = 'array'
         and option_index >= 0
-        and option_index < jsonb_array_length(po.poll_data->'options')
+        and case when jsonb_typeof(po.poll_data->'options') = 'array' then option_index < jsonb_array_length(po.poll_data->'options') else false end
     )
   );
 drop policy if exists "Users can remove their own poll vote" on public.poll_votes;
@@ -215,7 +215,7 @@ create policy "Signed-in users create their own posts"
       or
       (post_type = 'poll'
        and jsonb_typeof(poll_data->'options') = 'array'
-       and jsonb_array_length(poll_data->'options') between 2 and 4)
+       and case when jsonb_typeof(poll_data->'options') = 'array' then jsonb_array_length(poll_data->'options') between 2 and 4 else false end)
     )
   );
 

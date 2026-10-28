@@ -554,8 +554,8 @@ document.addEventListener('click',async event=>{
    }
    if(action==='create-community'){
     const name=prompt('Name your community (2–32 characters):');if(!name||name.trim().length<2)return;
-    state.communities=Array.isArray(state.communities)?state.communities:[];state.communities.unshift({id:'local-community-'+Date.now(),name:name.trim().slice(0,32),description:'A new community created in this browser.',category:'COMMUNITY',members:1});
-    state.joinedCommunities.push('local-community-'+Date.now());saveLocal();renderApp();toast('Community created locally.');return
+    state.communities=Array.isArray(state.communities)?state.communities:[];const communityId='local-community-'+Date.now();state.communities.unshift({id:communityId,name:name.trim().slice(0,32),description:'A new community created in this browser.',category:'COMMUNITY',members:1});
+    state.joinedCommunities.push(name.trim().slice(0,32));saveLocal();renderApp();toast('Community created locally.');return
    }
    if(action==='join-community'){
     const name=btn.getAttribute('data-name')||'Community';state.joinedCommunities=Array.isArray(state.joinedCommunities)?state.joinedCommunities:[];
@@ -600,6 +600,7 @@ document.addEventListener('click',async event=>{
 document.addEventListener('submit',async event=>{
  const form=event.target;
  try {
+  if(form.id==='explore-form'){event.preventDefault();exploreQuery=$('#explore-query')?.value.trim()||'';renderApp();return;}
   if(form.id==='age-form') {
    event.preventDefault();const raw=$('#birthday')?.value;if(!raw)return;
    const birth=new Date(raw+'T00:00:00');const now=new Date();
@@ -622,6 +623,11 @@ document.addEventListener('submit',async event=>{
   if(form.matches('[data-comment-form]')) {event.preventDefault();const submit=$('button[type="submit"]',form);if(submit){submit.disabled=true;submit.textContent='Sending…'}try{await addComment(form)}catch(err){console.error(err);toast(err.message||'Could not publish reply.')}finally{const current=$('button[type="submit"]',form);if(current){current.disabled=false;current.textContent='Reply'}}return;}
  } catch(err){console.error(err);toast(err.message||'Something went wrong.')}
 });
+document.addEventListener('input',event=>{
+ if(event.target&&event.target.id==='post-body'){
+  state.drafts=state.drafts||{};state.drafts.postDraft=event.target.value;saveLocal();
+ }
+});
 document.addEventListener('change',async event=>{
  if(event.target.id==='post-file') {
   const file=event.target.files?.[0];if(!file)return;
@@ -641,7 +647,7 @@ $('#command-form').addEventListener('submit',event=>{
  event.preventDefault();const value=$('#command-input').value.trim();if(!value)return;const key=value.toLowerCase().split(/\s+/)[0];
  if(routes.has(key)){navigate(key);$('#command-input').value='';return}
  if(value.startsWith('/')){navigate('/help');toast('Command not found. Open /help to see available commands.');$('#command-input').value='';return}
- navigate('/posts');setTimeout(()=>{const area=$('#post-body');if(area){area.value=value;area.focus();toast('Search is not connected yet; your text was placed in the post composer.')}},80);$('#command-input').value='';
+ exploreQuery=value;exploreCategory='ALL';navigate('/explore');$('#command-input').value='';
 });
 document.addEventListener('keydown',event=>{
  if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();$('#command-input').focus();$('#command-input').select()}

@@ -219,6 +219,39 @@ create policy "Signed-in users create their own posts"
     )
   );
 
+
+-- Follow graph. Reads are limited to the signed-in user's own following list.
+create table if not exists public.follows (
+  follower_id uuid not null references public.profiles(id) on delete cascade,
+  following_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (follower_id, following_id),
+  constraint follows_no_self_follow check (follower_id <> following_id)
+);
+create index if not exists follows_following_idx on public.follows (following_id);
+alter table public.follows enable row level security;
+revoke all on public.follows from anon, authenticated;
+grant select, insert, delete on public.follows to authenticated;
+drop policy if exists "Users can view their own following list" on public.follows;
+create policy "Users can view their own following list"
+  on public.follows for select to authenticated using ((select auth.uid()) = follower_id);
+drop policy if exists "Users can follow accounts as themselves" on public.follows;
+create policy "Users can follow accounts as themselves"
+  on public.follows for insert to authenticated
+  with check (
+    (select auth.uid()) = follower_id
+    and follower_id <> following_id
+    and exists (
+      select 1 from public.profiles pr
+      where pr.id = (select auth.uid())
+        and pr.terms_version = 'revenant-community-rules-0.03'
+        and pr.terms_accepted_at is not null
+    )
+  );
+drop policy if exists "Users can unfollow accounts as themselves" on public.follows;
+create policy "Users can unfollow accounts as themselves"
+  on public.follows for delete to authenticated using ((select auth.uid()) = follower_id);
+
 -- Public media bucket for media attached to public posts. Only the owner may upload,
 -- replace, or delete objects, and every upload must start with the user's auth UUID.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

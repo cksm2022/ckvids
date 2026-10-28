@@ -328,6 +328,42 @@ async function submitAuth(form) {
   if(data.user)await finishAuth(data.user);
  }
 }
+
+function addNotification(item){
+ state.notifications=Array.isArray(state.notifications)?state.notifications:[];
+ state.notifications.unshift({id:'note-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),type:'system',time:'Just now',unread:true,...item});
+ state.notifications=state.notifications.slice(0,80);
+}
+function renderExplore(){
+ const q=exploreQuery.trim().toLowerCase();
+ let posts=state.posts.filter(p=>!q||[p.body,p.text,p.name,p.handle,p.category,p.tag].join(' ').toLowerCase().includes(q));
+ if(exploreCategory!=='ALL')posts=posts.filter(p=>(p.category||p.tag||'GENERAL').toUpperCase()===exploreCategory);
+ posts.sort((a,b)=>Number(b.likes_count||b.likes||0)-Number(a.likes_count||a.likes||0));
+ const chips=['ALL','GAMING','ART & DESIGN','TECH','DISCUSSION','MEMES'];
+ return pageHeading('Explore','Search posts, topics, and ideas across Revenant.','<span class="pill">DISCOVER</span>')+
+ '<form id="explore-form" class="explore-search"><input id="explore-query" maxlength="100" value="'+escapeHtml(exploreQuery)+'" placeholder="Search posts, people, topics…" aria-label="Search Revenant"><button class="button button-primary" type="submit">Search ↗</button></form>'+
+ '<div class="topic-chips">'+chips.map(t=>'<button type="button" class="'+(exploreCategory===t?'active':'')+'" data-action="explore-category" data-category="'+t+'">'+t+'</button>').join('')+'</div>'+
+ '<section class="panel" style="padding:14px;margin-bottom:14px"><div class="panel-heading">Trending topics <span class="accent">↗</span></div><div class="topic-chips"><button data-action="topic-search" data-topic="Minecraft">#Minecraft</button><button data-action="topic-search" data-topic="IndieGames">#IndieGames</button><button data-action="topic-search" data-topic="Pixel art">Pixel art</button><button data-action="topic-search" data-topic="web building">Web building</button></div><div class="tiny muted">Topic trends are illustrative in this prototype, not live global analytics.</div></section>'+
+ '<div class="section-heading">Results <span class="pill">'+posts.length+' posts</span></div>'+
+ (posts.length?posts.map(p=>renderPost(p,commentsOpen.has(String(p.id)))).join(''):'<div class="empty-state"><div class="empty-icon">⌕</div><strong>No matching posts</strong>Try another phrase or change the category filter.</div>');
+}
+function renderSaved(){
+ const ids=new Set((state.bookmarks||[]).map(String));
+ const items=state.posts.filter(p=>ids.has(String(p.id)));
+ return pageHeading('Saved','A personal reading list of posts you want to revisit.','<span class="pill">'+items.length+' SAVED</span>')+
+ (items.length?items.map(p=>renderPost(p,commentsOpen.has(String(p.id)))).join(''):'<div class="empty-state"><div class="empty-icon">⌑</div><strong>Nothing saved yet</strong>Use Save on any post to collect it here.</div>');
+}
+function renderNotifications(){
+ const items=Array.isArray(state.notifications)?state.notifications:[];
+ return pageHeading('Notifications','Updates from your Revenant activity.','<button class="button button-small" data-action="mark-notifications-read">Mark all read</button>')+
+ '<section class="panel" style="padding:8px 14px">'+(items.length?items.map(n=>'<div class="notification-row '+(n.unread?'unread':'')+'"><span class="notification-icon">'+({like:'♥',comment:'▱',follow:'＋',community:'♧',post:'↗',system:'✦'}[n.type]||'•')+'</span><div class="notification-copy"><strong>'+escapeHtml(n.title||'Update')+'</strong><p>'+escapeHtml(n.body||'')+'</p><span class="tiny muted">'+escapeHtml(n.time||'Recently')+'</span></div>'+(n.unread?'<span class="dot" title="Unread"></span>':'')+'</div>').join(''):'<div class="empty-state"><strong>You are all caught up.</strong>New activity will show here.</div>')+'</section><p class="demo-notice">These are local prototype notifications. Live notifications and push alerts are planned for a future version.</p>';
+}
+function renderDrafts(){
+ const draft=(state.drafts||{}).postDraft||'';
+ return pageHeading('Drafts','Continue writing without publishing yet.','<span class="pill">'+(draft.trim()?'1 SAVED DRAFT':'NO DRAFT')+'</span>')+
+ (draft.trim()?'<section class="panel" style="padding:15px"><div class="panel-heading">Post draft <span class="tiny muted">Saved locally</span></div><div class="draft-preview">'+escapeHtml(draft)+'</div><div class="page-tools"><button class="button button-primary button-small" data-action="continue-draft">Continue editing</button><button class="button button-small" data-action="delete-draft">Delete draft</button></div></section>':'<div class="empty-state"><div class="empty-icon">▧</div><strong>No saved drafts</strong>Start a post and use Save draft, or type in the composer—the text autosaves locally.</div>');
+}
+
 function renderHelp() {
  const cmds=[['/home','Open the home dashboard'],['/feed','Browse the timeline'],['/posts','Create and browse text posts'],['/reels','Open short-video cards'],['/terms','Read the community rules'],['/settings','Profile, fonts, and backend'],['/messages','Open the message preview'],['/communities','Browse sample communities'],['/profile','View your profile']];
  return pageHeading('Command guide','Quick navigation for advanced users.')+'<section class="panel" style="padding:14px">'+cmds.map(c=>'<div class="topic-row"><div><b class="mono accent">'+c[0]+'</b><small>'+c[1]+'</small></div><button class="button button-small" data-command="'+c[0]+'">Run ↗</button></div>').join('')+'</section>';

@@ -11,7 +11,7 @@ Open index.html in a modern browser or host this directory as a static site. It 
 - Version-specific first-visit flags. A fresh 0.02 install starts with the birthday gate, then the “Welcome to Reven” rules screen. Clicking Agree without opening the rules shows the “Burch” joke and sends the visitor to the rules.
 - Terms acceptance is recorded as a versioned acknowledgement. Settings contains Reset onboarding so the first-visit screens can be tested again.
 - Black-and-red responsive layout, slash-style command navigation, Posts, Feed, Reels, communities, messaging preview, profile, and settings.
-- Local demo mode remains available without backend credentials.
+- Local demo mode remains available without backend credentials. Quick setup generates a local display name and a one-time demo password; that password does not authenticate a real server account.
 - Optional Supabase integration for email/password accounts, shared posts, profile records, comments, likes, bookmarks, and public post-media attachments.
 - supabase-schema.sql defines database tables, row-level security policies, and the post-media bucket policy.
 

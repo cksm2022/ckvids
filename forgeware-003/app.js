@@ -188,7 +188,7 @@ function renderSettings() {
 function renderProfile() {
  const p=profile||state.profile||{username:'Visitor'};
  const items=state.posts.filter(x=>remoteMode?x.user_id===user?.id:x.own);
- return '<section class="hero"><div class="hero-content"><span class="eyebrow">YOUR REVENANT ID</span><h1>'+escapeHtml(p.username||'Visitor')+'</h1><p>Your profile and post history. Animated avatars and profile themes will expand in later builds.</p><div class="hero-actions"><a class="button button-primary" href="#/settings">Edit profile</a><a class="button button-quiet" href="#/posts">Write a post</a></div></div></section><div class="stats"><div class="stat-card"><b>'+items.length+'</b><span>Your posts</span></div><div class="stat-card"><b>Free</b><span>Profile styles</span></div><div class="stat-card"><b>0.02</b><span>Current build</span></div></div><div class="section-heading">Your posts</div>'+(items.length?items.map(p=>renderPost(p,commentsOpen.has(String(p.id)))).join(''):'<div class="empty-state"><div class="empty-icon">◌</div><strong>No posts here yet</strong>Publish something from Posts to build your profile.</div>');
+ return '<section class="hero"><div class="hero-content"><span class="eyebrow">YOUR REVENANT ID</span><h1>'+escapeHtml(p.username||'Visitor')+'</h1><p class="profile-bio">'+escapeHtml(p.bio||'Your profile and post history. Add a bio in Settings.')+'</p><div class="hero-actions"><a class="button button-primary" href="#/settings">Edit profile</a><a class="button button-quiet" href="#/posts">Write a post</a></div></div></section><div class="stats"><div class="stat-card"><b>'+items.length+'</b><span>Your posts</span></div><div class="stat-card"><b>Free</b><span>Profile styles</span></div><div class="stat-card"><b>0.02</b><span>Current build</span></div></div><div class="section-heading">Your posts</div>'+(items.length?items.map(p=>renderPost(p,commentsOpen.has(String(p.id)))).join(''):'<div class="empty-state"><div class="empty-icon">◌</div><strong>No posts here yet</strong>Publish something from Posts to build your profile.</div>');
 }
 function renderCommunities() {
  const groups=[['PW','Pixel Workshop','Art, sprites, fan art, and tiny worlds.','Art & design','blue'],['ID','Indie Dev Corner','Build logs, coding questions, and game prototypes.','Technology','green'],['MC','Minecraft & Mods','Modpacks, builds, technical help, and survival stories.','Gaming','orange'],['CC','Clip Central','Funny clips, Reels, and gaming moments.','Entertainment','']];
@@ -204,6 +204,13 @@ function renderCommunities() {
 function renderMessages() {
  return pageHeading('Messages','Direct conversations, designed for a future shared release.','<span class="pill">PREVIEW</span>')+'<section class="panel" style="padding:32px 20px;text-align:center"><div style="font-size:34px">✉</div><h2 style="margin:8px 0">Your inbox is waiting.</h2><p class="muted small" style="max-width:350px;margin:0 auto 15px">Messaging needs user-to-user permissions, private storage, abuse controls, and real-time updates. This destination is a preview in 0.02.</p><a class="button button-primary" href="#/communities">Explore communities</a></section>';
 }
+function applyTheme(){
+ const palette={red:'#e02c40',purple:'#a855f7',blue:'#4285f4',green:'#52c78b'};
+ const accent=palette[state.theme]||palette.red;
+ document.documentElement.style.setProperty('--red',accent);
+ document.documentElement.style.setProperty('--red2',state.theme==='red'?'#a91628':accent);
+}
+
 function renderApp() {
  if(!profile&&!state.profile){showGate(db?'auth':'profile');return}
  updateHeader();
@@ -229,6 +236,7 @@ function renderApp() {
  const postBody=$('#post-body');if(postBody&&state.drafts&&state.drafts.postDraft&&postBody.value!==state.drafts.postDraft)postBody.value=state.drafts.postDraft;
  if($('#poll-builder'))$('#poll-builder').classList.toggle('hidden',composerMode!=='poll');
  $$('[data-action="set-post-type"]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-type')===composerMode));
+ applyTheme();
  document.body.classList.toggle('reduce-motion',!!state.reduceMotion);
 }
 function routeFromHash() {
@@ -660,6 +668,7 @@ document.addEventListener('change',async event=>{
   const reader=new FileReader();reader.onload=()=>{const holder=$('#attachment-preview');if(holder)holder.innerHTML='<div class="attachment-preview"><img src="'+String(reader.result)+'" alt="Attachment preview"><button type="button" id="remove-attachment" aria-label="Remove attachment">×</button></div>'};reader.readAsDataURL(file);
  }
  if(event.target.id==='font-upload')importFont(event.target.files?.[0]);
+ if(event.target.id==='profile-theme'){state.theme=['red','purple','blue','green'].includes(event.target.value)?event.target.value:'red';saveLocal();applyTheme();toast('Accent theme updated.');}
  if(event.target.id==='reduce-motion'){state.reduceMotion=event.target.checked;saveLocal();document.body.classList.toggle('reduce-motion',state.reduceMotion)}
 });
 document.addEventListener('click',event=>{

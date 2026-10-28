@@ -36,9 +36,17 @@ The generated password in quick demo setup is a UI demonstration only. It does n
 
 The client uses the publishable key and relies on database Row Level Security policies. Review/test those policies before inviting real users; this prototype has not received an independent security audit.
 
-## Hosting
+## Publish with GitHub Pages
 
-GitHub stores the source; it does not automatically make the site live. GitHub Pages must be enabled in repository settings before a public URL will work. The repository's Pages setting was not changed by this source-code update. Static hosting does not replace Supabase.
+The site is not live yet. The repository's GitHub Pages setting is currently disabled, and this work did not change that setting.
+
+1. Open repository Settings → Pages.
+2. Set the build/deployment source to GitHub Actions.
+3. Open the Actions tab and select “Publish Forgeware 0.03 to GitHub Pages”.
+4. Select “Run workflow” on the main branch.
+5. After the workflow succeeds, open the published URL shown in the deployment job.
+
+The deployment workflow is manual by design. It publishes the contents of forgeware-003/ as the website root, which will make Forgeware 0.03 the version served at the repository's Pages URL. GitHub Pages hosts the static front end; it does not replace Supabase for accounts or shared content.
 
 ## Intentionally future work
 

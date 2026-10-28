@@ -1,0 +1,42 @@
+name: Forgeware 0.03 checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "forgeware-003/**"
+      - ".github/workflows/forgeware-003-check.yml"
+  pull_request:
+    paths:
+      - "forgeware-003/**"
+      - ".github/workflows/forgeware-003-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Forgeware 0.03
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: node --check forgeware-003/app.js
+      - name: Check required files and core flow
+        shell: bash
+        run: |
+          test -s forgeware-003/index.html
+          test -s forgeware-003/styles.css
+          test -s forgeware-003/app.js
+          test -s forgeware-003/config.js
+          test -s forgeware-003/supabase-schema.sql
+          grep -q 'FORGEWARE 0.03' forgeware-003/index.html
+          grep -q 'Welcome to Reven.' forgeware-003/app.js
+          grep -q 'Burch.' forgeware-003/app.js
+          grep -q 'renderExplore' forgeware-003/app.js
+          grep -q 'get_poll_results' forgeware-003/app.js

@@ -536,7 +536,7 @@ document.addEventListener('click',async event=>{
    else if(action==='auth-login'){authMode='login';showGate('auth')}
    else if(action==='demo-profile')showGate('profile');
    else if(action==='quick-local'){const name='Reven_'+Math.random().toString(36).slice(2,7);pendingLocalProfile={username:name,initials:initials(name)};generatedDemoPassword=makeDemoPassword();showGate('local-credentials')}
-   else if(action==='copy-demo-credentials'){const text='Username: '+((pendingLocalProfile||{}).username||'')+'\\nDemo password: '+generatedDemoPassword;if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);toast('Demo details copied.')}else toast('Clipboard unavailable; select and copy the details manually.')}
+   else if(action==='copy-demo-credentials'){const text='Username: '+((pendingLocalProfile||{}).username||'')+'\nDemo password: '+generatedDemoPassword;if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(text);toast('Demo details copied.')}else toast('Clipboard unavailable; select and copy the details manually.')}
    else if(action==='enter-demo'){state.profile=pendingLocalProfile||{username:'Reven_'+Math.random().toString(36).slice(2,7),initials:'R'};pendingLocalProfile=null;generatedDemoPassword='';saveLocal();setProfile(state.profile);gateStep='';showGate('');navigate('/home');renderApp()}
    else if(action==='kids')location.href='https://www.youtubekids.com/';
   } catch(err){console.error(err);toast(err.message||'Something went wrong.')}
@@ -567,7 +567,7 @@ document.addEventListener('click',async event=>{
    }
    if(action==='repost'){
     const original=state.posts.find(x=>String(x.id)===String(id));if(!original)return;
-    const body='↻ Reposted from '+(original.name||'a member')+':\\n\\n'+(original.body||original.text||'');
+    const body='↻ Reposted from '+(original.name||'a member')+':\n\n'+(original.body||original.text||'');
     if(remoteMode&&db&&user){const {error}=await db.from('posts').insert({user_id:user.id,body,category:original.category||original.tag||'GENERAL',font_family:original.font_family||'standard',post_type:'post',poll_data:null,media_url:null});if(error)throw error;await refreshRemotePosts();toast('Repost published.');return}
     state.posts.unshift({id:'repost-'+Date.now(),name:(profile||state.profile||{}).username||'Visitor',handle:userHandle((profile||state.profile||{}).username||'Visitor'),created_at:new Date().toISOString(),category:original.category||original.tag||'GENERAL',body,font_family:'standard',likes_count:0,comments_count:0,comments:[],own:true,repost_of:id});saveLocal();renderApp();toast('Reposted to your local feed.');return
    }

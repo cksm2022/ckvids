@@ -87,7 +87,7 @@ function toast(message) {
 function setProfile(p) {
   profile=p||null;
   if (profile) {
-    state.profile={id:profile.id||null,username:profile.username||'Member',initials:initials(profile.username),avatar_url:profile.avatar_url||null};
+    state.profile={id:profile.id||null,username:profile.username||'Member',initials:initials(profile.username),avatar_url:profile.avatar_url||null,bio:profile.bio||''};
     saveLocal();
   }
   updateHeader();

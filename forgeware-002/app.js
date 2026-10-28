@@ -420,7 +420,7 @@ document.addEventListener('click',async event=>{
    else if(action==='read-terms') { termsOpenedThisVisit=true;showGate('terms'); }
    else if(action==='accept-terms') {
     storage.setItem(TERMS_KEY,JSON.stringify({version:TERMS_VERSION,acceptedAt:new Date().toISOString()}));
-    if(db&&!user){authMode='signup';showGate('auth')}
+    if(db&&!user){const result=await db.auth.getSession();if(result.error)throw result.error;if(result.data.session){user=result.data.session.user;remoteMode=true;await ensureProfile(user);gateStep='';showGate('');await refreshRemotePosts();navigate('/home');renderApp()}else{authMode='signup';showGate('auth')}}
     else if(db&&user){gateStep='';showGate('');navigate('/home');renderApp()}
     else showGate('profile');
    }
